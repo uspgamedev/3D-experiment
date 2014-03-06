@@ -11,3 +11,14 @@
 *.lai
 *.la
 *.a
+cmake_install.cmake
+CMakeFiles
+CMakeCache.txt
+Makefile
+ogre.cfg
+Ogre.log
+
+*.dll
+*.so
+/bin/ShipProject
+/bin/media
