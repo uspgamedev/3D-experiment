@@ -39,33 +39,36 @@ void TutorialApplication::createScene(void) {
 	PhysicsManager::reference()->Initialize(btVector3(0,-10,0), mSceneMgr);
 
     mSceneMgr->setAmbientLight(Ogre::ColourValue(0.5, 0.5, 0.5));
-    //mSceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
+    mSceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
  
     Ogre::Entity* playerEnt = mSceneMgr->createEntity("Ninja", "ninja.mesh");
     playerEnt->setCastShadows(true);
     mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(playerEnt);
+    playerEnt->setVisible(false);
     double ph = playerEnt->getBoundingBox().getSize().y;
     BtOgre::StaticMeshToShapeConverter converter (playerEnt);
     btTransform initialOffset(btQuaternion::getIdentity(), btVector3(0,-ph/2,0));
-    player = new ShipProject::GameObject(playerEnt, 80, converter.createCapsule(), initialOffset);
+    player = new ShipProject::GameObject(playerEnt, 80, new btCapsuleShape(0.2,1));// converter.createCapsule(), initialOffset);
     player->body()->setAngularFactor(btVector3(0.0, 0.0, 0.0));
     objects_.push_back( player );
 
-    mCamera->setPosition(Ogre::Vector3(0,ph*0.85,500));
-    mCamera->lookAt(Ogre::Vector3(0,ph*0.85,0));
+    //mCamera->setPosition(Ogre::Vector3(0,ph*0.85,10));
+    mCamera->setPosition(Ogre::Vector3(0,0.7,1));
+    mCamera->lookAt(Ogre::Vector3(0,0.7,0));
+    //mCamera->lookAt(Ogre::Vector3(0,ph*0.85,0));
 	playerEnt->getParentSceneNode()->createChildSceneNode("camNode")->attachObject(mCamera);
  
 	this->createPlane("ground", Ogre::Vector3::UNIT_Y, 0);
-	this->createPlane("ceiling", -Ogre::Vector3::UNIT_Y, -500);
-	this->createPlane("leftwall", Ogre::Vector3::UNIT_X, -500);
-	this->createPlane("rightwall", -Ogre::Vector3::UNIT_X, -500);
-	this->createPlane("backwall", Ogre::Vector3::UNIT_Z, -500);
-	this->createPlane("frontwall", -Ogre::Vector3::UNIT_Z, -500);
+	this->createPlane("ceiling", -Ogre::Vector3::UNIT_Y, -10);
+	this->createPlane("leftwall", Ogre::Vector3::UNIT_X, -10);
+	this->createPlane("rightwall", -Ogre::Vector3::UNIT_X, -10);
+	this->createPlane("backwall", Ogre::Vector3::UNIT_Z, -10);
+	this->createPlane("frontwall", -Ogre::Vector3::UNIT_Z, -10);
 
 	// LIGHTS
 	Ogre::Light* pointLight = mSceneMgr->createLight("pointLight");
     pointLight->setType(Ogre::Light::LT_POINT);
-    pointLight->setPosition(Ogre::Vector3(0, 150, 250));
+    pointLight->setPosition(Ogre::Vector3(0, 3, 5));
  
     pointLight->setDiffuseColour(1.0, 0.0, 0.0);
     pointLight->setSpecularColour(1.0, 0.0, 0.0);
@@ -83,11 +86,11 @@ void TutorialApplication::createScene(void) {
     spotLight->setSpecularColour(0, 0, 1.0);
  
     spotLight->setDirection(-1, -1, 0);
-    spotLight->setPosition(Ogre::Vector3(300, 300, 0));
+    spotLight->setPosition(Ogre::Vector3(10, 10, 0));
     spotLight->setSpotlightRange(Ogre::Degree(35), Ogre::Degree(50));
 
 	// GOTTA CHECK IF WE SUPPORT THE INSTANCING TECHNIQUE (involves hardware and software)
-	createSphere("mySphereMesh", 15);
+	createSphere("mySphereMesh", 0.3);
 	//balls = mSceneMgr->createInstanceManager("balls", "mySphereMesh", Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME, 
 	//	Ogre::InstanceManager::InstancingTechnique::HWInstancingVTF, 100, Ogre::IM_USEALL);
 }
@@ -106,7 +109,7 @@ void TutorialApplication::createCamera(void)
     mCamera = mSceneMgr->createCamera("PlayerCam");
     
     // set the near clip distance
-    mCamera->setNearClipDistance(5);
+    mCamera->setNearClipDistance(1);
  
     mCameraMan = new OgreBites::SdkCameraMan(mCamera);   // create a default camera controller
 }
@@ -124,7 +127,7 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt) {
 		PhysicsManager::reference()->Update(evt.timeSinceLastFrame);
         
 		//player->Translate( player->entity()->getParentSceneNode()->getOrientation() * mDirection * evt.timeSinceLastFrame);
-        player->Move( player->entity()->getParentSceneNode()->getOrientation() * mDirection );
+        player->Move( player->entity()->getParentSceneNode()->getOrientation() * mDirection * (1.0/50.0) );
 		return true;
 	}
 	return false;
@@ -200,16 +203,17 @@ bool TutorialApplication::mousePressed( const OIS::MouseEvent &arg, OIS::MouseBu
 		ball->setMaterialName("Ogre/Skin");
 
 		Ogre::SceneNode* node = mSceneMgr->getRootSceneNode()->createChildSceneNode();
-		node->setPosition(player->entity()->getParentSceneNode()->getPosition() + Ogre::Vector3(0.0, player->entity()->getBoundingBox().getSize().y*0.8, 0.0) );
+		//node->setPosition(player->entity()->getParentSceneNode()->getPosition() + Ogre::Vector3(0.0, player->entity()->getBoundingBox().getSize().y*0.8, 0.0) );
+    node->setPosition(player->entity()->getParentSceneNode()->getPosition() + Ogre::Vector3(0.0, 1, 0));
 		node->setOrientation(player->entity()->getParentSceneNode()->getOrientation() );
-		node->translate( node->getOrientation() * (Ogre::Vector3::UNIT_Z * -50) );
+		node->translate( node->getOrientation() * (Ogre::Vector3::UNIT_Z * -1) );
 		node->attachObject(ball);
 
-        ShipProject::GameObject* oBall = new ShipProject::GameObject(ball, 1, new btSphereShape(15));
+        ShipProject::GameObject* oBall = new ShipProject::GameObject(ball, 1, new btSphereShape(0.3));
         objects_.push_back( oBall );
 
         // orientatation * (original model forward vector) = direction vector
-        oBall->body()->setLinearVelocity( BtOgre::Convert::toBullet(node->getOrientation() * Ogre::Vector3::NEGATIVE_UNIT_Z * 300) );
+        oBall->body()->setLinearVelocity( BtOgre::Convert::toBullet(node->getOrientation() * Ogre::Vector3::NEGATIVE_UNIT_Z * 60) );
         oBall->body()->setRestitution(1.0);
 	}
     return true;
@@ -219,7 +223,7 @@ void TutorialApplication::createPlane(const std::string& name, const Ogre::Vecto
 	Ogre::Plane plane(dir, dist);
  
     Ogre::MeshManager::getSingleton().createPlane(name, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-        plane, 1000, 1000, 20, 20, true, 1, 5, 5, dir.perpendicular());
+        plane, 20, 20, 20, 20, true, 1, 5, 5, dir.perpendicular());
  
     Ogre::Entity* entGround = mSceneMgr->createEntity(name+"Entity", name);
     mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(entGround);
