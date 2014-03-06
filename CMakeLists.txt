@@ -6,6 +6,11 @@ project(ShipProject)
 if(WIN32)
 	set(CMAKE_MODULE_PATH "$ENV{OGRE_HOME}/CMake/;${CMAKE_MODULE_PATH}")
 endif(WIN32)
+
+set (
+  3DEXP_CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}
+  CACHE PATH "Custom module path"
+)
  
 if(UNIX)
 	if(EXISTS "/usr/local/lib/OGRE/cmake")
@@ -13,7 +18,8 @@ if(UNIX)
 	elseif(EXISTS "/usr/lib/OGRE/cmake")
 	  set(CMAKE_MODULE_PATH "/usr/lib/OGRE/cmake/;${CMAKE_MODULE_PATH}")
 	else ()
-	  message(SEND_ERROR "Failed to find module path.")
+    #message(SEND_ERROR "Failed to find module path.")
+    set(CMAKE_MODULE_PATH "${3DEXP_CMAKE_MODULE_PATH};${CMAKE_MODULE_PATH}")
 	endif(EXISTS "/usr/local/lib/OGRE")
 endif(UNIX)
  
@@ -87,6 +93,15 @@ if (MSVC)
     endforeach()
 ENDIF(MSVC)
     
+
+if (UNIX OR MINGW)
+  # se for o g++ para *nix ou o MinGW para Windows:
+  add_definitions(-Wall -ansi -U_FORTIFY_SOURCE -std=gnu++0x)
+  if(NOT ANDROID)
+    add_definitions(-msse2)
+  endif()
+endif ()
+
 # PROJECT SOURCES
 set(SRCS
 	./src/BaseApplication.h
