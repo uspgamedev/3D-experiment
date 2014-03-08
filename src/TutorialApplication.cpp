@@ -22,11 +22,13 @@ This source file is part of the
 #include <BtOgreExtras.h>
 #include <BtOgreGP.h>
 
+#include <string>
+
 using ShipProject::PhysicsManager;
 
 //-------------------------------------------------------------------------------------
 TutorialApplication::TutorialApplication(void) {
-	mRotate = 0.13;
+	mRotate = 0.05;
 	mMove = 250;
 	mDirection = Ogre::Vector3::ZERO;
 }
@@ -39,24 +41,26 @@ void TutorialApplication::createScene(void) {
 	PhysicsManager::reference()->Initialize(btVector3(0,-10,0), mSceneMgr);
 
     mSceneMgr->setAmbientLight(Ogre::ColourValue(0.5, 0.5, 0.5));
-    mSceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
+    //mSceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
  
     Ogre::Entity* playerEnt = mSceneMgr->createEntity("Ninja", "ninja.mesh");
     playerEnt->setCastShadows(true);
     mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(playerEnt);
     playerEnt->setVisible(false);
-    double ph = playerEnt->getBoundingBox().getSize().y;
+    /*double ph = playerEnt->getBoundingBox().getSize().y;
+    playerEnt->getParentSceneNode()->setScale(1.0/ph,1.0/ph,1.0/ph);
+    ph = playerEnt->getBoundingBox().getSize().y;
     BtOgre::StaticMeshToShapeConverter converter (playerEnt);
-    btTransform initialOffset(btQuaternion::getIdentity(), btVector3(0,-ph/2,0));
+    btTransform initialOffset(btQuaternion::getIdentity(), btVector3(0,-ph/2,0));*/
     player = new ShipProject::GameObject(playerEnt, 80, new btCapsuleShape(0.2,1));// converter.createCapsule(), initialOffset);
-    player->body()->setAngularFactor(btVector3(0.0, 0.0, 0.0));
+    player->body()->setAngularFactor(btVector3(0.0, 0.0,0.0));
     objects_.push_back( player );
 
     //mCamera->setPosition(Ogre::Vector3(0,ph*0.85,10));
-    mCamera->setPosition(Ogre::Vector3(0,0.7,1));
+    mCamera->setPosition(Ogre::Vector3(0,0.7,5));
     mCamera->lookAt(Ogre::Vector3(0,0.7,0));
     //mCamera->lookAt(Ogre::Vector3(0,ph*0.85,0));
-	playerEnt->getParentSceneNode()->createChildSceneNode("camNode")->attachObject(mCamera);
+	playerEnt->getParentSceneNode()->createChildSceneNode()->attachObject(mCamera);
  
 	this->createPlane("ground", Ogre::Vector3::UNIT_Y, 0);
 	this->createPlane("ceiling", -Ogre::Vector3::UNIT_Y, -10);
@@ -191,7 +195,7 @@ bool TutorialApplication::mouseMoved( const OIS::MouseEvent &arg ) {
 	if (mTrayMgr->injectMouseMove(arg)) return true;
 	/*player->getParentSceneNode()->yaw(Ogre::Degree(-mRotate * arg.state.X.rel), Ogre::Node::TS_WORLD);
     player->getParentSceneNode()->pitch(Ogre::Degree(-mRotate * arg.state.Y.rel), Ogre::Node::TS_LOCAL);*/
-    player->Rotate(-mRotate * arg.state.X.rel, -mRotate * arg.state.Y.rel, 0);
+    player->Rotate(-mRotate * arg.state.Y.rel, -mRotate * arg.state.X.rel, 0);
     return true;
 }
 bool TutorialApplication::mousePressed( const OIS::MouseEvent &arg, OIS::MouseButtonID id ) {
@@ -200,13 +204,16 @@ bool TutorialApplication::mousePressed( const OIS::MouseEvent &arg, OIS::MouseBu
 
 	if (id == OIS::MB_Left) {
 		//Ogre::InstancedEntity* ball = balls->createInstancedEntity("Ogre/Skin");
-		Ogre::Entity* ball = mSceneMgr->createEntity("mySphereMesh");
+        static int count = 1;
+        const std::string ballName = "ball"+std::to_string(count);
+        count++;
+		Ogre::Entity* ball = mSceneMgr->createEntity(ballName, "mySphereMesh");
 		//ball->setCastShadows(true);
 		ball->setMaterialName("Ogre/Skin");
 
 		Ogre::SceneNode* node = mSceneMgr->getRootSceneNode()->createChildSceneNode();
 		//node->setPosition(player->entity()->getParentSceneNode()->getPosition() + Ogre::Vector3(0.0, player->entity()->getBoundingBox().getSize().y*0.8, 0.0) );
-    node->setPosition(player->entity()->getParentSceneNode()->getPosition() + Ogre::Vector3(0.0, 1, 0));
+        node->setPosition(player->entity()->getParentSceneNode()->getPosition() + Ogre::Vector3(0.0, 1, 0));
 		node->setOrientation(player->entity()->getParentSceneNode()->getOrientation() );
 		node->translate( node->getOrientation() * (Ogre::Vector3::UNIT_Z * -1) );
 		node->attachObject(ball);
@@ -215,19 +222,20 @@ bool TutorialApplication::mousePressed( const OIS::MouseEvent &arg, OIS::MouseBu
         objects_.push_back( oBall );
 
         // orientatation * (original model forward vector) = direction vector
-        oBall->body()->setLinearVelocity( BtOgre::Convert::toBullet(node->getOrientation() * Ogre::Vector3::NEGATIVE_UNIT_Z * 60) );
+        oBall->body()->setLinearVelocity( BtOgre::Convert::toBullet(node->getOrientation() * Ogre::Vector3::NEGATIVE_UNIT_Z * 300));
         oBall->body()->setRestitution(1.0);
 	}
     return true;
 }
 
-void TutorialApplication::createPlane(const std::string& name, const Ogre::Vector3& dir, double dist) {
+void TutorialApplication::createPlane(const std::string& name, const Ogre::Vector3& dir, double dist, double width, double height) {
 	Ogre::Plane plane(dir, dist);
  
     Ogre::MeshManager::getSingleton().createPlane(name, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-        plane, 20, 20, 20, 20, true, 1, 5, 5, dir.perpendicular());
+        plane, width, height, 5, 5, true, 1, 5, 5, dir.perpendicular());
  
-    Ogre::Entity* entGround = mSceneMgr->createEntity(name+"Entity", name);
+    const std::string wat = name+ "Entity";
+    Ogre::Entity* entGround = mSceneMgr->createEntity(wat, name);
     mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(entGround);
  
     entGround->setMaterialName("Examples/Rockwall");
@@ -238,7 +246,7 @@ void TutorialApplication::createPlane(const std::string& name, const Ogre::Vecto
     objects_.push_back( ground );
 }
 void TutorialApplication::createSphere(const std::string& strName, const float r, const int nRings, const int nSegments) {
-	Ogre::MeshPtr pSphere = Ogre::MeshManager::getSingleton().createManual(strName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+	Ogre::MeshPtr pSphere = Ogre::MeshManager::getSingleton().createManual(Ogre::String(strName), Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 	Ogre::SubMesh *pSphereVertex = pSphere->createSubMesh();
  
 	pSphere->sharedVertexData = new Ogre::VertexData();

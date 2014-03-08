@@ -38,7 +38,7 @@ protected:
 	virtual bool mouseMoved( const OIS::MouseEvent &arg );
 	virtual bool mousePressed( const OIS::MouseEvent &arg, OIS::MouseButtonID id );
 
-	void createPlane(const std::string& name, const Ogre::Vector3& dir, double dist);
+	void createPlane(const std::string& name, const Ogre::Vector3& dir, double dist, double width=20.0, double height=20.0);
 	void createSphere(const std::string& strName, const float r, const int nRings = 16, const int nSegments = 16);
 
 	ShipProject::GameObject* player;

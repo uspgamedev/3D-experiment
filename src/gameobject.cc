@@ -60,17 +60,20 @@ void GameObject::Translate(const Ogre::Vector3& move) {
     body_->translate(BtOgre::Convert::toBullet(move));
 }
 void GameObject::Move(const Ogre::Vector3& delta) {
-    body_->setLinearVelocity(BtOgre::Convert::toBullet(delta));
+    body_->activate();
+    body_->applyCentralImpulse(BtOgre::Convert::toBullet(delta));
 }
 void GameObject::Rotate(double yaw, double pitch, double roll) {
-    btTransform t;
-    body_->getMotionState()->getWorldTransform(t);
+    //body_->activate();    
+    //body_->applyTorque(btVector3(yaw, pitch, roll));
+
+    btTransform t = body_->getCenterOfMassTransform();
     Ogre::Quaternion rot = BtOgre::Convert::toOgre(t.getRotation());
 
     Ogre::Matrix3 ypr = Ogre::Matrix3::IDENTITY;
     ypr.FromEulerAnglesXYZ(Ogre::Radian(yaw), Ogre::Radian(pitch), Ogre::Radian(roll));
     t.setRotation( BtOgre::Convert::toBullet(rot * ypr) );
-    body_->getMotionState()->setWorldTransform(t);
+    body_->setCenterOfMassTransform(t);
 }
 
 /**********************************************************/
