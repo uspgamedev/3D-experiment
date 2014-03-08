@@ -153,6 +153,8 @@ bool TutorialApplication::keyPressed( const OIS::KeyEvent &arg ) {
 		case OIS::KC_Q:
 			mDirection.y = mMove;
 			break;
+        default:
+            break;
     }
 
 	return BaseApplication::keyPressed(arg);

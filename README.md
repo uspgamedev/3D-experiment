@@ -3,6 +3,16 @@
 
 Proof of concept for a 3D game engine using Ogre (v1.9 forward) and Bullet (v2.82 forward, included).
 
+-------------------------------
+ RUNNING THE PROGRAM
+-------------------------------
+When initializing, Ogre loads some dynamic plugins, most importantly the render systems.
+Ogre knows which plugins and where to load them from thanks to the <>/bin/plugins(_d).cfg
+file.
+At this time, you'll probably need to alter this file to suit your dev-environment.
+
+Project's <>/bin/media folder wasn't included in the repository (so far), you'll need to download
+it from somewhere else. Ask the devs!
 
 
 -------------------------------
@@ -10,6 +20,18 @@ Proof of concept for a 3D game engine using Ogre (v1.9 forward) and Bullet (v2.8
 -------------------------------
 -Tested in Win7/VS2012, precompiled Ogre SDK
 -Tested in Linux, built Ogre SDK from source
+
+BUILDING THE PROJECT (3D-experiment/ShipProject)
+On Visual Studio: after generating VS projects, you'll need to set the ShipProject as start-up project,
+and working directory as the <project folder>/bin folder - this is where the executable is placed, so you
+can use the macro $(TargetDir) as well.
+
+BUILDING BULLET:
+We've included a Bullet Physics engine build along with this project, and it should not
+cause any problems when compiling.
+
+However, Bullet's CMake option "USE_DOUBLE_PRECISION" is known to cause linking errors if ON.
+We could alter our Bullet build to fix this, but haven't so far.
 
 BUILDING OGRE:
 Ogre uses several external libraries, and it includes some of them.
@@ -33,10 +55,3 @@ compiled, and all required external dependencies either included or already comp
 Ogre's libraries and plugins.
 Ogre source may be downloaded from Ogre site or most likely as a zip file from their repository,
 remember we're using v1.9!
-
-BUILDING BULLET:
-We've included a Bullet Physics engine build along with this project, and it should not
-cause any problems when compiling.
-
-However, Bullet's CMake option "USE_DOUBLE_PRECISION" is known to cause linking errors if ON.
-We could alter our Bullet build to fix this, but haven't so far.
