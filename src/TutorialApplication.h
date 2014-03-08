@@ -20,6 +20,7 @@ This source file is part of the
 #include "BaseApplication.h"
 #include <vector>
 #include <gameobject.h>
+#include <gamecamera.h>
 
 class TutorialApplication : public BaseApplication
 {
@@ -41,6 +42,7 @@ protected:
 	void createPlane(const std::string& name, const Ogre::Vector3& dir, double dist, double width=20.0, double height=20.0);
 	void createSphere(const std::string& strName, const float r, const int nRings = 16, const int nSegments = 16);
 
+    ShipProject::GameCamera* camera;
 	ShipProject::GameObject* player;
 	double mRotate;          // The rotate constant
 	double mMove;            // The movement constant

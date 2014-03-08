@@ -76,27 +76,4 @@ void GameObject::Rotate(double yaw, double pitch, double roll) {
     body_->setCenterOfMassTransform(t);
 }
 
-/**********************************************************/
-GameObjectMotionState::GameObjectMotionState(Ogre::Entity* ent) {
-    Ogre::Quaternion orient = ent->getParentSceneNode()->getOrientation();
-    Ogre::Vector3 pos = ent->getParentSceneNode()->getPosition();
-    transform_ = btTransform( BtOgre::Convert::toBullet(orient), BtOgre::Convert::toBullet(pos));
-    entity_ = ent;
-}
-GameObjectMotionState::GameObjectMotionState(const btTransform &initialpos, Ogre::Entity* ent) {
-    transform_ = initialpos;
-    entity_ = ent;
-}
-
-void GameObjectMotionState::setWorldTransform(const btTransform &worldTrans) {
-    transform_ = worldTrans;
-    if(entity_ == nullptr)
-        return; // silently return before we set a node
-    btQuaternion rot = worldTrans.getRotation();
-    entity_->getParentSceneNode()->setOrientation(rot.w(), rot.x(), rot.y(), rot.z());
-    btVector3 pos = worldTrans.getOrigin();
-    entity_->getParentSceneNode()->setPosition(pos.x(), pos.y(), pos.z());
-}
-
-
 }

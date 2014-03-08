@@ -56,11 +56,10 @@ void TutorialApplication::createScene(void) {
     player->body()->setAngularFactor(btVector3(0.0, 0.0,0.0));
     objects_.push_back( player );
 
-    //mCamera->setPosition(Ogre::Vector3(0,ph*0.85,10));
-    mCamera->setPosition(Ogre::Vector3(0,0.7,5));
-    mCamera->lookAt(Ogre::Vector3(0,0.7,0));
-    //mCamera->lookAt(Ogre::Vector3(0,ph*0.85,0));
-	playerEnt->getParentSceneNode()->createChildSceneNode()->attachObject(mCamera);
+    /*mCamera->setPosition(Ogre::Vector3(0,0.7,5));
+    mCamera->lookAt(Ogre::Vector3(0,0.7,0));*/
+    camera->SetParameters(Ogre::Vector3(0, 0.7, 0), 7.0);
+    camera->AttachTo(player);
  
 	this->createPlane("ground", Ogre::Vector3::UNIT_Y, 0);
 	this->createPlane("ceiling", -Ogre::Vector3::UNIT_Y, -10);
@@ -103,18 +102,15 @@ void TutorialApplication::destroyScene() {
         delete obj;
     }
     objects_.clear();
-
+    delete camera;
 	delete PhysicsManager::reference();
 }
 
 void TutorialApplication::createCamera(void)
 {
+    camera = new ShipProject::GameCamera(mSceneMgr);
     // create the camera
-    mCamera = mSceneMgr->createCamera("PlayerCam");
-    
-    // set the near clip distance
-    mCamera->setNearClipDistance(1);
- 
+    mCamera = camera->camera(); 
     mCameraMan = new OgreBites::SdkCameraMan(mCamera);   // create a default camera controller
 }
 void TutorialApplication::createViewports(void)
@@ -131,7 +127,7 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt) {
 		PhysicsManager::reference()->Update(evt.timeSinceLastFrame);
         
 		//player->Translate( player->entity()->getParentSceneNode()->getOrientation() * mDirection * evt.timeSinceLastFrame);
-        player->Move( player->entity()->getParentSceneNode()->getOrientation() * mDirection * (1.0/50.0) );
+        player->Move( camera->orientation() * mDirection * (1.0/50.0) );
 		return true;
 	}
 	return false;
@@ -193,9 +189,7 @@ bool TutorialApplication::keyReleased( const OIS::KeyEvent &arg ) {
 }
 bool TutorialApplication::mouseMoved( const OIS::MouseEvent &arg ) {
 	if (mTrayMgr->injectMouseMove(arg)) return true;
-	/*player->getParentSceneNode()->yaw(Ogre::Degree(-mRotate * arg.state.X.rel), Ogre::Node::TS_WORLD);
-    player->getParentSceneNode()->pitch(Ogre::Degree(-mRotate * arg.state.Y.rel), Ogre::Node::TS_LOCAL);*/
-    player->Rotate(-mRotate * arg.state.Y.rel, -mRotate * arg.state.X.rel, 0);
+    camera->injectMouseMoved(arg);
     return true;
 }
 bool TutorialApplication::mousePressed( const OIS::MouseEvent &arg, OIS::MouseButtonID id ) {
@@ -212,10 +206,10 @@ bool TutorialApplication::mousePressed( const OIS::MouseEvent &arg, OIS::MouseBu
 		ball->setMaterialName("Ogre/Skin");
 
 		Ogre::SceneNode* node = mSceneMgr->getRootSceneNode()->createChildSceneNode();
-		//node->setPosition(player->entity()->getParentSceneNode()->getPosition() + Ogre::Vector3(0.0, player->entity()->getBoundingBox().getSize().y*0.8, 0.0) );
-        node->setPosition(player->entity()->getParentSceneNode()->getPosition() + Ogre::Vector3(0.0, 1, 0));
-		node->setOrientation(player->entity()->getParentSceneNode()->getOrientation() );
-		node->translate( node->getOrientation() * (Ogre::Vector3::UNIT_Z * -1) );
+        Ogre::Quaternion orient = camera->orientation();
+        node->setPosition(player->entity()->getParentSceneNode()->getPosition() );
+		node->setOrientation(orient);
+		node->translate( orient * (Ogre::Vector3::UNIT_Z * -0.5) );
 		node->attachObject(ball);
 
         ShipProject::GameObject* oBall = new ShipProject::GameObject(ball, 1, new btSphereShape(0.3));

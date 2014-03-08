@@ -110,6 +110,8 @@ set(SRCS
 	./src/TutorialApplication.cpp
     ./src/gameobject.h
     ./src/gameobject.cc
+    ./src/gamecamera.h
+    ./src/gamecamera.cc
     ./src/physicsmanager.h
     ./src/physicsmanager.cc
 )

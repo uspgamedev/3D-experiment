@@ -35,28 +35,5 @@ protected:
 	btRigidBody* body_;
 };
 
-class GameObjectMotionState : public btMotionState {
-public:
-    GameObjectMotionState(Ogre::Entity* ent);
-    GameObjectMotionState(const btTransform &initialpos, Ogre::Entity* ent);
-
-    virtual ~GameObjectMotionState() {
-    }
-
-    void setEntity(Ogre::Entity* ent) {
-        entity_ = ent;
-    }
-
-    virtual void getWorldTransform(btTransform &worldTrans) const {
-        worldTrans = transform_;
-    }
-
-    virtual void setWorldTransform(const btTransform &worldTrans);
-
-protected:
-    btTransform transform_;
-    Ogre::Entity* entity_;
-};
-
 }
 #endif
