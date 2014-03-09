@@ -38,9 +38,14 @@ protected:
     virtual bool keyReleased( const OIS::KeyEvent &arg );
 	virtual bool mouseMoved( const OIS::MouseEvent &arg );
 	virtual bool mousePressed( const OIS::MouseEvent &arg, OIS::MouseButtonID id );
+    virtual bool buttonPressed( const OIS::JoyStickEvent &arg, int button );
+	virtual bool buttonReleased( const OIS::JoyStickEvent &arg, int button );
+	virtual bool axisMoved( const OIS::JoyStickEvent &arg, int axis );
+    virtual bool sliderMoved( const OIS::JoyStickEvent &arg, int index);
 
 	void createPlane(const std::string& name, const Ogre::Vector3& dir, double dist, double width=20.0, double height=20.0);
 	void createSphere(const std::string& strName, const float r, const int nRings = 16, const int nSegments = 16);
+    void shootSphere();
 
     ShipProject::GameCamera* camera;
 	ShipProject::GameObject* player;

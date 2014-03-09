@@ -108,6 +108,15 @@ void BaseApplication::createFrameListener(void)
     mMouse->setEventCallback(this);
     mKeyboard->setEventCallback(this);
 
+    try {
+        mJoyStick = static_cast<OIS::JoyStick*>(mInputManager->createInputObject( OIS::OISJoyStick, true));
+        mJoyStick->setEventCallback(this);
+    }
+    catch (OIS::Exception& e) {
+        mJoyStick = nullptr;
+        std::cerr << "JoyStick Exception: " << e.what() << std::endl;
+    }
+
     //Set initial mouse clipping size
     windowResized(mWindow);
 
@@ -253,6 +262,8 @@ bool BaseApplication::frameRenderingQueued(const Ogre::FrameEvent& evt)
     //Need to capture/update each device
     mKeyboard->capture();
     mMouse->capture();
+    if (mJoyStick)
+        mJoyStick->capture();
 
     mTrayMgr->frameRenderingQueued(evt);
 
@@ -417,6 +428,8 @@ void BaseApplication::windowClosed(Ogre::RenderWindow* rw)
         {
             mInputManager->destroyInputObject( mMouse );
             mInputManager->destroyInputObject( mKeyboard );
+            if (mJoyStick != nullptr)
+                mInputManager->destroyInputObject(mJoyStick);
 
             OIS::InputManager::destroyInputSystem(mInputManager);
             mInputManager = 0;

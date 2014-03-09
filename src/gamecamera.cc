@@ -18,6 +18,7 @@ GameCamera::GameCamera(Ogre::SceneManager* sceneMgr, const std::string& camName)
     dist_ = 0;
     offset_ = Vector3::ZERO;
     max_dist_ = 7.5;
+    cumulative_pitch_ = 0;
 }
 
 GameCamera::~GameCamera() {
@@ -51,15 +52,25 @@ Quaternion GameCamera::orientation() {
 }
 
 void GameCamera::injectMouseMoved( const OIS::MouseEvent &arg ) {
-    Ogre::SceneNode* node = camera_->getParentSceneNode();
-    node->yaw(Ogre::Degree(-0.13 * arg.state.X.rel), Ogre::Node::TS_WORLD);
-    node->pitch(Ogre::Degree(-0.13 * arg.state.Y.rel), Ogre::Node::TS_LOCAL);
-
-    dist_ += ((arg.state.Z.rel > 0) ? -1 : 1) * 0.225;
+    Rotate(-0.13 * arg.state.X.rel, -0.13 * arg.state.Y.rel);
+    SetDistance(dist_ + ((arg.state.Z.rel > 0) ? -1 : 1) * 0.225);
+}
+void GameCamera::SetDistance(double dist) {
+    dist_ = dist;
     if (dist_ <= 0) dist_ = 0;
     if (dist_ > max_dist_) dist_ = max_dist_;
     Vector3 pos = parent_->entity()->getParentSceneNode()->getOrientation() * Vector3::UNIT_Z * dist_;
     camera_->setPosition( pos );
+}
+void GameCamera::Rotate(double yaw, double pitch) {
+    Ogre::SceneNode* node = camera_->getParentSceneNode();
+    node->yaw(Ogre::Degree( yaw ), Ogre::Node::TS_WORLD);
+
+    cumulative_pitch_ += pitch;
+    if ( Ogre::Math::Abs(cumulative_pitch_) <= 90 )
+         node->pitch(Ogre::Degree( pitch ), Ogre::Node::TS_LOCAL);
+    else
+        cumulative_pitch_ -= pitch;
 }
 
 void GameCamera::setupTransform() {

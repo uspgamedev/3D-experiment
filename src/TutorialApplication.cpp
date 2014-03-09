@@ -128,6 +128,29 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt) {
         
 		//player->Translate( player->entity()->getParentSceneNode()->getOrientation() * mDirection * evt.timeSinceLastFrame);
         player->Move( camera->orientation() * mDirection * (1.0/50.0) );
+        
+        if (mJoyStick) {
+            /* For some reason, OIS reports one of my gamepad's axes as a 'slider'(at least in windows)...
+            Also, joystick event are called only when axis/slider value changes, and since they aren't 
+            continuous, you can stick a axis to one side continuosly but the event will only be called once,
+            so we need to do this here.
+            Finally, aparently after moving from the initial state of value 0 the axis rest at [-]256 and not at 0...
+            */
+            OIS::JoyStickState joy = mJoyStick->getJoyStickState();
+            double yaw = 0;
+            if ( Ogre::Math::Abs(joy.mAxes[0].abs) > 256)
+                yaw = -150 * evt.timeSinceLastFrame * joy.mAxes[0].abs / OIS::JoyStick::MAX_AXIS;
+            double pitch = 0;
+            if ( Ogre::Math::Abs(joy.mSliders[0].abX) > 256)
+                pitch = -150 * evt.timeSinceLastFrame * joy.mSliders[0].abX / OIS::JoyStick::MAX_AXIS;
+            camera->Rotate(yaw, pitch);
+
+            if (joy.mPOV[0].direction == OIS::Pov::North)
+                camera->SetDistance( camera->GetDistance() - evt.timeSinceLastFrame*2);
+            else if (joy.mPOV[0].direction == OIS::Pov::South)
+                camera->SetDistance( camera->GetDistance() + evt.timeSinceLastFrame*2);
+
+        }
 		return true;
 	}
 	return false;
@@ -197,28 +220,55 @@ bool TutorialApplication::mousePressed( const OIS::MouseEvent &arg, OIS::MouseBu
     mCameraMan->injectMouseDown(arg, id);
 
 	if (id == OIS::MB_Left) {
-		//Ogre::InstancedEntity* ball = balls->createInstancedEntity("Ogre/Skin");
-        static int count = 1;
-        const std::string ballName = "ball"+std::to_string(count);
-        count++;
-		Ogre::Entity* ball = mSceneMgr->createEntity(ballName, "mySphereMesh");
-		//ball->setCastShadows(true);
-		ball->setMaterialName("Ogre/Skin");
-
-		Ogre::SceneNode* node = mSceneMgr->getRootSceneNode()->createChildSceneNode();
-        Ogre::Quaternion orient = camera->orientation();
-        node->setPosition(player->entity()->getParentSceneNode()->getPosition() );
-		node->setOrientation(orient);
-		node->translate( orient * (Ogre::Vector3::UNIT_Z * -0.5) );
-		node->attachObject(ball);
-
-        ShipProject::GameObject* oBall = new ShipProject::GameObject(ball, 1, new btSphereShape(0.3));
-        objects_.push_back( oBall );
-
-        // orientatation * (original model forward vector) = direction vector
-        oBall->body()->setLinearVelocity( BtOgre::Convert::toBullet(node->getOrientation() * Ogre::Vector3::NEGATIVE_UNIT_Z * 300));
-        oBall->body()->setRestitution(1.0);
+		shootSphere();
 	}
+    return true;
+}
+bool TutorialApplication::buttonPressed( const OIS::JoyStickEvent &arg, int button ) {
+    switch (button) {
+    case 0:
+        shootSphere();
+        break;
+    case 2:
+        PhysicsManager::reference()->set_debug_draw_enabled( !PhysicsManager::reference()->debug_draw_enabled());
+        break;
+    case 4:
+        mDirection.y = mMove;
+        break;
+    case 5:
+        mDirection.y = -mMove;
+        break;
+    case 6:
+        shootSphere();
+        break;
+    default:
+        break;
+    }
+    return true;
+}
+bool TutorialApplication::buttonReleased( const OIS::JoyStickEvent &arg, int button ) {
+    switch (button) {
+    case 4:
+        mDirection.y = 0;
+        break;
+    case 5:
+        mDirection.y = 0;
+        break;
+    default:
+        break;
+    }
+    return true;
+}
+bool TutorialApplication::axisMoved( const OIS::JoyStickEvent &arg, int axis ) {
+    if (axis == 1) {
+        mDirection.z = (mMove * arg.state.mAxes[axis].abs) / OIS::JoyStick::MAX_AXIS;
+    }
+    if (axis == 2) {
+        mDirection.x = (mMove * arg.state.mAxes[axis].abs) / OIS::JoyStick::MAX_AXIS;
+    }
+    return true;
+}
+bool TutorialApplication::sliderMoved( const OIS::JoyStickEvent &arg, int index) {
     return true;
 }
 
@@ -325,6 +375,26 @@ void TutorialApplication::createSphere(const std::string& strName, const float r
     pSphere->load();
 }
 
+void TutorialApplication::shootSphere() {
+    //Ogre::InstancedEntity* ball = balls->createInstancedEntity("Ogre/Skin");
+	Ogre::Entity* ball = mSceneMgr->createEntity("mySphereMesh");
+	//ball->setCastShadows(true);
+	ball->setMaterialName("Ogre/Skin");
+
+	Ogre::SceneNode* node = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+    Ogre::Quaternion orient = camera->orientation();
+    node->setPosition(player->entity()->getParentSceneNode()->getPosition() );
+	node->setOrientation(orient);
+	node->translate( orient * (Ogre::Vector3::UNIT_Z * -0.5) );
+	node->attachObject(ball);
+
+    ShipProject::GameObject* oBall = new ShipProject::GameObject(ball, 1, new btSphereShape(0.3));
+    objects_.push_back( oBall );
+
+    // orientatation * (original model forward vector) = direction vector
+    oBall->body()->setLinearVelocity( BtOgre::Convert::toBullet(node->getOrientation() * Ogre::Vector3::NEGATIVE_UNIT_Z * 300));
+    oBall->body()->setRestitution(1.0);
+}
 
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
 #define WIN32_LEAN_AND_MEAN
