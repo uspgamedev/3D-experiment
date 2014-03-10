@@ -22,9 +22,18 @@ This source file is part of the
 #include <BtOgreExtras.h>
 #include <BtOgreGP.h>
 
+#include <functional>
 #include <string>
 
+#define PLAYER_RADIUS 0.7
+#define BALL_RADIUS 0.5
+#define PROJECTILE_RADIUS 0.1
+#define AREA_RANGE 20.0
+
 using ShipProject::PhysicsManager;
+using ShipProject::GameObject;
+using ShipProject::CollisionGroup;
+using ShipProject::CollisionLogic;
 
 //-------------------------------------------------------------------------------------
 TutorialApplication::TutorialApplication(void) {
@@ -38,62 +47,66 @@ TutorialApplication::~TutorialApplication(void) {
 
 //-------------------------------------------------------------------------------------
 void TutorialApplication::createScene(void) {
-	PhysicsManager::reference()->Initialize(btVector3(0,-10,0), mSceneMgr);
+	PhysicsManager::reference()->Initialize(btVector3(0,0,0), mSceneMgr);
 
     mSceneMgr->setAmbientLight(Ogre::ColourValue(0.5, 0.5, 0.5));
     //mSceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
  
-    Ogre::Entity* playerEnt = mSceneMgr->createEntity("Ninja", "ninja.mesh");
+    createSphere("playerBall", PLAYER_RADIUS);
+    createSphere("evilBall", BALL_RADIUS);
+    createSphere("projectile", PROJECTILE_RADIUS);
+    Ogre::MaterialPtr mMat = Ogre::MaterialManager::getSingleton().create("Projectile/Red", "General", true);
+    mMat->getTechnique(0)->getPass(0)->setDiffuse(Ogre::ColourValue(1.0, 0.1, 0));
+    mMat->getTechnique(0)->getPass(0)->setEmissive(Ogre::ColourValue(1.0, 0.1, 0));
+    Ogre::MaterialPtr mMat2 = Ogre::MaterialManager::getSingleton().create("Projectile/Blue", "General", true);
+    mMat2->getTechnique(0)->getPass(0)->setDiffuse(Ogre::ColourValue(0, 0.1, 1.0));
+    mMat2->getTechnique(0)->getPass(0)->setEmissive(Ogre::ColourValue(0, 0.1, 1.0));
+    Ogre::MaterialPtr mMat3 = Ogre::MaterialManager::getSingleton().getByName("Ogre/Skin")->clone("PlayerBall");
+    mMat3->getTechnique(0)->getPass(0)->setDiffuse(Ogre::ColourValue(0.1,0.1,1.0,0.1));
+    mMat3->setSceneBlending(Ogre::SceneBlendType::SBT_TRANSPARENT_ALPHA);
+
+    Ogre::Entity* playerEnt = mSceneMgr->createEntity("Player", "playerBall");
     playerEnt->setCastShadows(true);
     mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(playerEnt);
-    playerEnt->setVisible(false);
-    /*double ph = playerEnt->getBoundingBox().getSize().y;
-    playerEnt->getParentSceneNode()->setScale(1.0/ph,1.0/ph,1.0/ph);
-    ph = playerEnt->getBoundingBox().getSize().y;
-    BtOgre::StaticMeshToShapeConverter converter (playerEnt);
-    btTransform initialOffset(btQuaternion::getIdentity(), btVector3(0,-ph/2,0));*/
-    player = new ShipProject::GameObject(playerEnt, 80, new btCapsuleShape(0.2,1));// converter.createCapsule(), initialOffset);
+    playerEnt->setMaterialName("PlayerBall");
+    player = new GameObject(playerEnt, 40);
+    player->SetupCollision(new btSphereShape(PLAYER_RADIUS), CollisionGroup::PLAYER, 
+                            CollisionGroup::BALLS | CollisionGroup::PROJECTILES_BALLS | CollisionGroup::WALLS);
     player->body()->setAngularFactor(btVector3(0.0, 0.0,0.0));
     objects_.push_back( player );
 
-    /*mCamera->setPosition(Ogre::Vector3(0,0.7,5));
-    mCamera->lookAt(Ogre::Vector3(0,0.7,0));*/
-    camera->SetParameters(Ogre::Vector3(0, 0.7, 0), 7.0);
+    camera->SetParameters(Ogre::Vector3(0, PLAYER_RADIUS/2, 0), PLAYER_RADIUS*5);
+    camera->SetDistance(PLAYER_RADIUS*5);
     camera->AttachTo(player);
  
-	this->createPlane("ground", Ogre::Vector3::UNIT_Y, 0);
-	this->createPlane("ceiling", -Ogre::Vector3::UNIT_Y, -10);
-	this->createPlane("leftwall", Ogre::Vector3::UNIT_X, -10);
-	this->createPlane("rightwall", -Ogre::Vector3::UNIT_X, -10);
-	this->createPlane("backwall", Ogre::Vector3::UNIT_Z, -10);
-	this->createPlane("frontwall", -Ogre::Vector3::UNIT_Z, -10);
+	this->createPlane("ground", Ogre::Vector3::UNIT_Y, -(AREA_RANGE/2));
+	this->createPlane("ceiling", -Ogre::Vector3::UNIT_Y, -(AREA_RANGE/2));
+	this->createPlane("leftwall", Ogre::Vector3::UNIT_X, -(AREA_RANGE/2));
+	this->createPlane("rightwall", -Ogre::Vector3::UNIT_X, -(AREA_RANGE/2));
+	this->createPlane("backwall", Ogre::Vector3::UNIT_Z, -(AREA_RANGE/2));
+	this->createPlane("frontwall", -Ogre::Vector3::UNIT_Z, -(AREA_RANGE/2));
 
 	// LIGHTS
 	Ogre::Light* pointLight = mSceneMgr->createLight("pointLight");
     pointLight->setType(Ogre::Light::LT_POINT);
-    pointLight->setPosition(Ogre::Vector3(0, 3, 5));
- 
-    pointLight->setDiffuseColour(1.0, 0.0, 0.0);
-    pointLight->setSpecularColour(1.0, 0.0, 0.0);
+    pointLight->setPosition(Ogre::Vector3(0, 0, 0));
+    pointLight->setDiffuseColour(1.0, 1.0, 1.0);
+    pointLight->setSpecularColour(1.0, 1.0, 1.0);
  
     Ogre::Light* directionalLight = mSceneMgr->createLight("directionalLight");
     directionalLight->setType(Ogre::Light::LT_DIRECTIONAL);
-    directionalLight->setDiffuseColour(Ogre::ColourValue(.25, .25, 0));
-    directionalLight->setSpecularColour(Ogre::ColourValue(.25, .25, 0));
- 
+    directionalLight->setDiffuseColour(Ogre::ColourValue(0, 0, 0.25));
+    directionalLight->setSpecularColour(Ogre::ColourValue(0, 0, 0.25));
     directionalLight->setDirection(Ogre::Vector3( 0, -1, 1 )); 
- 
-    Ogre::Light* spotLight = mSceneMgr->createLight("spotLight");
-    spotLight->setType(Ogre::Light::LT_SPOTLIGHT);
-    spotLight->setDiffuseColour(0, 0, 1.0);
-    spotLight->setSpecularColour(0, 0, 1.0);
- 
-    spotLight->setDirection(-1, -1, 0);
-    spotLight->setPosition(Ogre::Vector3(10, 10, 0));
-    spotLight->setSpotlightRange(Ogre::Degree(35), Ogre::Degree(50));
+
+    CollisionLogic logic = 
+        [this](GameObject* obj1, GameObject* obj2, btManifoldPoint& pt) { 
+            this->handleCollisions(obj1,obj2,pt); 
+    };
+    PhysicsManager::reference()->set_collision_logic(logic);
 
 	// GOTTA CHECK IF WE SUPPORT THE INSTANCING TECHNIQUE (involves hardware and software)
-	createSphere("mySphereMesh", 0.3);
+	
 	//balls = mSceneMgr->createInstanceManager("balls", "mySphereMesh", Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME, 
 	//	Ogre::InstanceManager::InstancingTechnique::HWInstancingVTF, 100, Ogre::IM_USEALL);
 }
@@ -127,7 +140,7 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt) {
 		PhysicsManager::reference()->Update(evt.timeSinceLastFrame);
         
 		//player->Translate( player->entity()->getParentSceneNode()->getOrientation() * mDirection * evt.timeSinceLastFrame);
-        player->Move( camera->orientation() * mDirection * (1.0/50.0) );
+        player->Move( camera->actual_orientation() * mDirection * (1.0/50.0) );
         
         if (mJoyStick) {
             /* For some reason, OIS reports one of my gamepad's axes as a 'slider'(at least in windows)...
@@ -144,6 +157,7 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt) {
             if ( Ogre::Math::Abs(joy.mSliders[0].abX) > 256)
                 pitch = -150 * evt.timeSinceLastFrame * joy.mSliders[0].abX / OIS::JoyStick::MAX_AXIS;
             camera->Rotate(yaw, pitch);
+            //player->Rotate(pitch*100, yaw*100, 0);
 
             if (joy.mPOV[0].direction == OIS::Pov::North)
                 camera->SetDistance( camera->GetDistance() - evt.timeSinceLastFrame*2);
@@ -151,6 +165,19 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt) {
                 camera->SetDistance( camera->GetDistance() + evt.timeSinceLastFrame*2);
 
         }
+
+        std::list<std::string> projs_to_remove;
+        for (auto& pair: projectiles_) {
+            Projectile& proj = pair.second;
+            proj.lifetime -= evt.timeSinceLastFrame;
+            if (proj.lifetime < 0) {
+                objects_.remove(proj.owner);
+                projs_to_remove.push_back(pair.first);
+                delete proj.owner;
+            }
+        }
+        for (auto& name : projs_to_remove) 
+            projectiles_.erase(name);
 		return true;
 	}
 	return false;
@@ -220,17 +247,23 @@ bool TutorialApplication::mousePressed( const OIS::MouseEvent &arg, OIS::MouseBu
     mCameraMan->injectMouseDown(arg, id);
 
 	if (id == OIS::MB_Left) {
-		shootSphere();
+		shoot();
 	}
+    else if (id == OIS::MB_Right) {
+        summonEvilBall();
+    }
     return true;
 }
 bool TutorialApplication::buttonPressed( const OIS::JoyStickEvent &arg, int button ) {
     switch (button) {
     case 0:
-        shootSphere();
+        shoot();
         break;
     case 2:
         PhysicsManager::reference()->set_debug_draw_enabled( !PhysicsManager::reference()->debug_draw_enabled());
+        break;
+    case 3:
+        summonEvilBall();
         break;
     case 4:
         mDirection.y = mMove;
@@ -239,7 +272,7 @@ bool TutorialApplication::buttonPressed( const OIS::JoyStickEvent &arg, int butt
         mDirection.y = -mMove;
         break;
     case 6:
-        shootSphere();
+        shoot();
         break;
     default:
         break;
@@ -261,10 +294,16 @@ bool TutorialApplication::buttonReleased( const OIS::JoyStickEvent &arg, int but
 }
 bool TutorialApplication::axisMoved( const OIS::JoyStickEvent &arg, int axis ) {
     if (axis == 1) {
-        mDirection.z = (mMove * arg.state.mAxes[axis].abs) / OIS::JoyStick::MAX_AXIS;
+        if (Ogre::Math::Abs(arg.state.mAxes[axis].abs) > 256)
+            mDirection.z = (mMove * arg.state.mAxes[axis].abs) / OIS::JoyStick::MAX_AXIS;
+        else
+            mDirection.z = 0;
     }
     if (axis == 2) {
-        mDirection.x = (mMove * arg.state.mAxes[axis].abs) / OIS::JoyStick::MAX_AXIS;
+        if (Ogre::Math::Abs(arg.state.mAxes[axis].abs) > 256)
+            mDirection.x = (mMove * arg.state.mAxes[axis].abs) / OIS::JoyStick::MAX_AXIS;
+        else
+            mDirection.x = 0;
     }
     return true;
 }
@@ -285,7 +324,9 @@ void TutorialApplication::createPlane(const std::string& name, const Ogre::Vecto
     entGround->setMaterialName("Examples/Rockwall");
     entGround->setCastShadows(false);
 
-    ShipProject::GameObject* ground = new ShipProject::GameObject(entGround, 0, new btStaticPlaneShape(btVector3(dir.x,dir.y,dir.z), dist));
+    ShipProject::GameObject* ground = new ShipProject::GameObject(entGround, 0);
+    ground->SetupCollision(new btStaticPlaneShape(btVector3(dir.x,dir.y,dir.z), dist), CollisionGroup::WALLS,
+        CollisionGroup::BALLS | CollisionGroup::PLAYER | CollisionGroup::PROJECTILES_BALLS | CollisionGroup::PROJECTILES_PLAYER);
     ground->body()->setRestitution(0.6);
     objects_.push_back( ground );
 }
@@ -375,25 +416,71 @@ void TutorialApplication::createSphere(const std::string& strName, const float r
     pSphere->load();
 }
 
-void TutorialApplication::shootSphere() {
+void TutorialApplication::shoot() {
     //Ogre::InstancedEntity* ball = balls->createInstancedEntity("Ogre/Skin");
-	Ogre::Entity* ball = mSceneMgr->createEntity("mySphereMesh");
+	Ogre::Entity* ball = mSceneMgr->createEntity("projectile");
 	//ball->setCastShadows(true);
-	ball->setMaterialName("Ogre/Skin");
+	ball->setMaterialName("Projectile/Blue");
 
 	Ogre::SceneNode* node = mSceneMgr->getRootSceneNode()->createChildSceneNode();
-    Ogre::Quaternion orient = camera->orientation();
+    Ogre::Quaternion orient = camera->actual_orientation();
     node->setPosition(player->entity()->getParentSceneNode()->getPosition() );
 	node->setOrientation(orient);
 	node->translate( orient * (Ogre::Vector3::UNIT_Z * -0.5) );
 	node->attachObject(ball);
 
-    ShipProject::GameObject* oBall = new ShipProject::GameObject(ball, 1, new btSphereShape(0.3));
+    ShipProject::GameObject* oBall = new ShipProject::GameObject(ball, 0.25);
+    oBall->SetupCollision(new btSphereShape(PROJECTILE_RADIUS), CollisionGroup::PROJECTILES_PLAYER, CollisionGroup::BALLS | CollisionGroup::WALLS);
     objects_.push_back( oBall );
 
     // orientatation * (original model forward vector) = direction vector
-    oBall->body()->setLinearVelocity( BtOgre::Convert::toBullet(node->getOrientation() * Ogre::Vector3::NEGATIVE_UNIT_Z * 300));
+    oBall->body()->setLinearVelocity( BtOgre::Convert::toBullet(node->getOrientation() * Ogre::Vector3::NEGATIVE_UNIT_Z * 100));
     oBall->body()->setRestitution(1.0);
+    oBall->body()->activate(true);
+
+    projectiles_.emplace(oBall->entity_name(), Projectile(oBall, 5.0));
+}
+
+void TutorialApplication::summonEvilBall() {
+    Ogre::Entity* ball = mSceneMgr->createEntity("evilBall");
+	ball->setMaterialName("Ogre/Skin");
+
+	Ogre::SceneNode* node = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+    node->setPosition(Ogre::Vector3(Ogre::Math::SymmetricRandom() * (AREA_RANGE/2),
+                                    Ogre::Math::SymmetricRandom() * (AREA_RANGE/2),
+                                    Ogre::Math::SymmetricRandom() * (AREA_RANGE/2)));
+	node->attachObject(ball);
+
+    ShipProject::GameObject* oBall = new ShipProject::GameObject(ball, 2);
+    oBall->SetupCollision(new btSphereShape(BALL_RADIUS), CollisionGroup::BALLS, CollisionGroup::PLAYER | CollisionGroup::WALLS 
+                                                   | CollisionGroup::BALLS | CollisionGroup::PROJECTILES_PLAYER);
+    objects_.push_back( oBall );
+
+    if (Ogre::Math::UnitRandom() < 0.5) {
+        oBall->body()->setLinearVelocity( btVector3(Ogre::Math::SymmetricRandom(), 
+                                                    Ogre::Math::SymmetricRandom(), 
+                                                    Ogre::Math::SymmetricRandom()) * Ogre::Math::RangeRandom(0.0, 70.0) );
+    }
+    oBall->body()->setRestitution(1.0);
+    oBall->body()->activate(true);
+}
+
+#define CHECK_TYPES(a,b,t1,t2) ((a->collision_group()==t1 && b->collision_group()==t2)|| (a->collision_group()==t2 && b->collision_group()==t1))
+void TutorialApplication::handleCollisions(GameObject* obj1, GameObject* obj2, btManifoldPoint& pt) {
+    if (obj1->collision_group() == CollisionGroup::PROJECTILES_PLAYER && obj2->collision_group() == CollisionGroup::BALLS) {
+        objects_.remove(obj1);
+        objects_.remove(obj2);
+        projectiles_.erase(obj1->entity_name());
+        delete obj1;
+        delete obj2;
+    }
+    else if (obj2->collision_group() == CollisionGroup::PROJECTILES_PLAYER && obj1->collision_group() == CollisionGroup::BALLS) {
+        objects_.remove(obj1);
+        objects_.remove(obj2);
+        projectiles_.erase(obj2->entity_name());
+        delete obj1;
+        delete obj2;
+    }
 }
 
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32

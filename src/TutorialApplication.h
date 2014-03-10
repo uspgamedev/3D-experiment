@@ -18,7 +18,8 @@ This source file is part of the
 #define __TutorialApplication_h_
 
 #include "BaseApplication.h"
-#include <vector>
+#include <list>
+#include <map>
 #include <gameobject.h>
 #include <gamecamera.h>
 
@@ -45,7 +46,9 @@ protected:
 
 	void createPlane(const std::string& name, const Ogre::Vector3& dir, double dist, double width=20.0, double height=20.0);
 	void createSphere(const std::string& strName, const float r, const int nRings = 16, const int nSegments = 16);
-    void shootSphere();
+    void shoot();
+    void summonEvilBall();
+    void handleCollisions(ShipProject::GameObject* obj1, ShipProject::GameObject* obj2, btManifoldPoint& pt);
 
     ShipProject::GameCamera* camera;
 	ShipProject::GameObject* player;
@@ -55,7 +58,15 @@ protected:
 
 	Ogre::InstanceManager* balls;
 
-    std::vector<ShipProject::GameObject*> objects_;
+    std::list<ShipProject::GameObject*> objects_;
+
+    struct Projectile {
+        ShipProject::GameObject* owner;
+        double lifetime;
+        Projectile(ShipProject::GameObject* _owner, double _lifetime) 
+            : owner(_owner), lifetime(_lifetime) {}
+    };
+    std::map<std::string, Projectile> projectiles_;
 };
 
 #endif // #ifndef __TutorialApplication_h_

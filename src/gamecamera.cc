@@ -50,6 +50,11 @@ Quaternion GameCamera::orientation() {
         return camera_->getParentSceneNode()->getOrientation();
     return Quaternion::IDENTITY;
 }
+Quaternion GameCamera::actual_orientation() {
+    if (parent_ != nullptr)
+        return parent_->entity()->getParentSceneNode()->getOrientation() * camera_->getParentSceneNode()->getOrientation();
+    return Quaternion::IDENTITY;
+}
 
 void GameCamera::injectMouseMoved( const OIS::MouseEvent &arg ) {
     Rotate(-0.13 * arg.state.X.rel, -0.13 * arg.state.Y.rel);
@@ -59,10 +64,12 @@ void GameCamera::SetDistance(double dist) {
     dist_ = dist;
     if (dist_ <= 0) dist_ = 0;
     if (dist_ > max_dist_) dist_ = max_dist_;
+    if (parent_ == nullptr) return;
     Vector3 pos = parent_->entity()->getParentSceneNode()->getOrientation() * Vector3::UNIT_Z * dist_;
     camera_->setPosition( pos );
 }
 void GameCamera::Rotate(double yaw, double pitch) {
+    if (parent_ == nullptr) return;
     Ogre::SceneNode* node = camera_->getParentSceneNode();
     node->yaw(Ogre::Degree( yaw ), Ogre::Node::TS_WORLD);
 

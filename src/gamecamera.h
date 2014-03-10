@@ -31,7 +31,8 @@ public:
 
     Ogre::Camera* camera() { return camera_; }
     GameObject* parent() { return parent_; }
-    Ogre::Quaternion orientation();
+    Ogre::Quaternion orientation(); //local camera orientation
+    Ogre::Quaternion actual_orientation(); //world camera orientation
 
     void injectMouseMoved( const OIS::MouseEvent &arg );
 

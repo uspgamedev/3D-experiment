@@ -1,14 +1,8 @@
 #ifndef PHYSICSMANAGER_H_
 #define PHYSICSMANAGER_H_
 
-
-class btBroadphaseInterface;
-class btDefaultCollisionConfiguration;
-class btCollisionDispatcher;
-class btSequentialImpulseConstraintSolver;
-class btDiscreteDynamicsWorld;
-class btRigidBody;
-class btVector3;
+#include <functional>
+#include <btBulletDynamicsCommon.h>
 
 namespace BtOgre {
 class DebugDrawer;
@@ -18,6 +12,9 @@ class SceneManager;
 }
 
 namespace ShipProject {
+class GameObject;
+
+typedef std::function<void (GameObject*,GameObject*,btManifoldPoint&)> CollisionLogic;
 
 class PhysicsManager {
 public:
@@ -28,11 +25,14 @@ public:
     void Initialize(const btVector3& grav, Ogre::SceneManager* sceneMgr);
     void Update(double dt);
 
-    void AddBody(btRigidBody* body);
-    void RemoveBody(btRigidBody* body);
+    void AddBody(GameObject* obj);
+    void RemoveBody(GameObject* obj);
 
     void set_debug_draw_enabled(bool enable);
     bool debug_draw_enabled();
+
+    void set_collision_logic(CollisionLogic& logic) { col_logic_ = logic; }
+    CollisionLogic& collision_logic() { return col_logic_; }
 
 private:
 	static PhysicsManager* reference_;
@@ -46,6 +46,8 @@ private:
     btDiscreteDynamicsWorld* world_;
 
     BtOgre::DebugDrawer* debug_drawer_;
+
+    CollisionLogic col_logic_;
 };
 
 }

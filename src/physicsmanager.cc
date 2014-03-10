@@ -14,7 +14,7 @@
 #include <btBulletDynamicsCommon.h>
 #include <BtOgreExtras.h>
 #include <OgreSceneManager.h>
-
+#include <gameobject.h>
 
 namespace ShipProject {
 
@@ -32,6 +32,7 @@ PhysicsManager::~PhysicsManager() {
     delete world_;
 }
 
+void tickCallback(btDynamicsWorld *world, btScalar timeStep);
 
 void PhysicsManager::Initialize(const btVector3& grav, Ogre::SceneManager* sceneMgr) {
 	// Broadphase is the initial collision detecting: checks for colliding pairs given their bounding boxes
@@ -54,18 +55,22 @@ void PhysicsManager::Initialize(const btVector3& grav, Ogre::SceneManager* scene
     debug_drawer_ = new BtOgre::DebugDrawer(sceneMgr->getRootSceneNode(), world_);
     debug_drawer_->setDebugMode(false);
     world_->setDebugDrawer(debug_drawer_);
+
+    world_->setInternalTickCallback( &tickCallback );
 }
 
 void PhysicsManager::Update(double dt) {
+    // stepSimulation( dt, maxSubSteps, fixedDtSubStep=1/60)
+    // dt < maxSubSteps * fixedDtSubStep
     world_->stepSimulation(dt, 10);
     debug_drawer_->step();
 }
 
-void PhysicsManager::AddBody(btRigidBody* body) {
-    world_->addRigidBody(body);
+void PhysicsManager::AddBody(GameObject* obj) {
+    world_->addRigidBody(obj->body(), obj->collision_group(), obj->collides_with());
 }
-void PhysicsManager::RemoveBody(btRigidBody* body) {
-    world_->removeRigidBody(body);
+void PhysicsManager::RemoveBody(GameObject* obj) {
+    world_->removeRigidBody(obj->body());
 }
 
 void PhysicsManager::set_debug_draw_enabled(bool enable) { 
@@ -74,4 +79,31 @@ void PhysicsManager::set_debug_draw_enabled(bool enable) {
 bool PhysicsManager::debug_draw_enabled() { 
     return debug_drawer_->getDebugMode() != 0; 
 }
+
+void tickCallback(btDynamicsWorld *world, btScalar timeStep) {
+    int numManifolds = world->getDispatcher()->getNumManifolds();
+	for (int i=0;i<numManifolds;i++)
+	{
+		btPersistentManifold* contactManifold =  world->getDispatcher()->getManifoldByIndexInternal(i);
+        GameObject* obA = static_cast<GameObject*>(contactManifold->getBody0()->getUserPointer());
+		GameObject* obB = static_cast<GameObject*>(contactManifold->getBody1()->getUserPointer());
+
+		int numContacts = contactManifold->getNumContacts();
+		for (int j=0;j<numContacts;j++)
+		{
+			btManifoldPoint& pt = contactManifold->getContactPoint(j);
+            //std::cout << obA->entity_name() << " IS NEAR (" << pt.getDistance() << ") " << obB->entity_name() << std::endl;
+			if (pt.getDistance() <= 0)
+			{
+                CollisionLogic& logic = PhysicsManager::reference()->collision_logic();
+                if (logic) {
+                    logic(obA, obB, pt);
+                }
+                //std::cout << obA->entity_name() << "(" << ptA.x() << ", " << ptA.y() << ", "<<ptA.z() << ") collided with " << 
+                //    obB->entity_name() << "(" << ptB.x() << ", " << ptB.y() << ", "<<ptB.z() << ")" << std::endl;
+			}
+		}
+	}
+}
+
 }
