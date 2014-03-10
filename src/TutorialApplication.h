@@ -47,6 +47,7 @@ protected:
 	void createPlane(const std::string& name, const Ogre::Vector3& dir, double dist, double width=20.0, double height=20.0);
 	void createSphere(const std::string& strName, const float r, const int nRings = 16, const int nSegments = 16);
     void shoot();
+    void evilShot(ShipProject::GameObject* enemy, double speed);
     void summonEvilBall();
     void handleCollisions(ShipProject::GameObject* obj1, ShipProject::GameObject* obj2, btManifoldPoint& pt);
 
@@ -63,10 +64,23 @@ protected:
     struct Projectile {
         ShipProject::GameObject* owner;
         double lifetime;
+
+        Projectile() = default;
         Projectile(ShipProject::GameObject* _owner, double _lifetime) 
             : owner(_owner), lifetime(_lifetime) {}
     };
     std::map<std::string, Projectile> projectiles_;
+    
+    struct Enemy {
+        ShipProject::GameObject* owner;
+        double cooldown;
+        double timeElapsed;
+
+        Enemy() = default;
+        Enemy(ShipProject::GameObject* _owner, double _cooldown) 
+            : owner(_owner), cooldown(_cooldown), timeElapsed(0) {}
+    };
+    std::map<std::string, Enemy> enemies_;
 };
 
 #endif // #ifndef __TutorialApplication_h_

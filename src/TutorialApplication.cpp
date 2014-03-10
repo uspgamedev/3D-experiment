@@ -30,6 +30,18 @@ This source file is part of the
 #define PROJECTILE_RADIUS 0.1
 #define AREA_RANGE 20.0
 
+#ifdef _WIN32
+#define MOVE_FORWARD_AXIS   1
+#define MOVE_SIDEWAYS_AXIS  2
+#define CAMERA_YAW_VALUE    joy.mAxes[0].abs
+#define CAMERA_PITCH_VALUE  joy.mSliders[0].abX
+#else
+#define MOVE_FORWARD_AXIS   1
+#define MOVE_SIDEWAYS_AXIS  0
+#define CAMERA_YAW_VALUE    joy.mAxes[2].abs
+#define CAMERA_PITCH_VALUE  joy.mAxes[3].abs
+#endif
+
 using ShipProject::PhysicsManager;
 using ShipProject::GameObject;
 using ShipProject::CollisionGroup;
@@ -62,7 +74,7 @@ void TutorialApplication::createScene(void) {
     mMat2->getTechnique(0)->getPass(0)->setDiffuse(Ogre::ColourValue(0, 0.1, 1.0));
     mMat2->getTechnique(0)->getPass(0)->setEmissive(Ogre::ColourValue(0, 0.1, 1.0));
     Ogre::MaterialPtr mMat3 = Ogre::MaterialManager::getSingleton().getByName("Ogre/Skin")->clone("PlayerBall");
-    mMat3->getTechnique(0)->getPass(0)->setDiffuse(Ogre::ColourValue(0.1,0.1,1.0,0.1));
+    mMat3->getTechnique(0)->getPass(0)->setDiffuse(Ogre::ColourValue(0.1,0.1,1.0,0.5));
     mMat3->setSceneBlending(Ogre::SceneBlendType::SBT_TRANSPARENT_ALPHA);
 
     Ogre::Entity* playerEnt = mSceneMgr->createEntity("Player", "playerBall");
@@ -84,7 +96,7 @@ void TutorialApplication::createScene(void) {
 	this->createPlane("leftwall", Ogre::Vector3::UNIT_X, -(AREA_RANGE/2));
 	this->createPlane("rightwall", -Ogre::Vector3::UNIT_X, -(AREA_RANGE/2));
 	this->createPlane("backwall", Ogre::Vector3::UNIT_Z, -(AREA_RANGE/2));
-	this->createPlane("frontwall", -Ogre::Vector3::UNIT_Z, -(AREA_RANGE/2));
+    this->createPlane("frontwall", -Ogre::Vector3::UNIT_Z, -(AREA_RANGE/2));
 
 	// LIGHTS
 	Ogre::Light* pointLight = mSceneMgr->createLight("pointLight");
@@ -151,11 +163,11 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt) {
             */
             OIS::JoyStickState joy = mJoyStick->getJoyStickState();
             double yaw = 0;
-            if ( Ogre::Math::Abs(joy.mAxes[0].abs) > 256)
-                yaw = -150 * evt.timeSinceLastFrame * joy.mAxes[0].abs / OIS::JoyStick::MAX_AXIS;
+            if ( Ogre::Math::Abs(CAMERA_YAW_VALUE) > 256)
+                yaw = -150 * evt.timeSinceLastFrame * CAMERA_YAW_VALUE / OIS::JoyStick::MAX_AXIS;
             double pitch = 0;
-            if ( Ogre::Math::Abs(joy.mSliders[0].abX) > 256)
-                pitch = -150 * evt.timeSinceLastFrame * joy.mSliders[0].abX / OIS::JoyStick::MAX_AXIS;
+            if ( Ogre::Math::Abs(CAMERA_PITCH_VALUE) > 256)
+                pitch = -150 * evt.timeSinceLastFrame * CAMERA_PITCH_VALUE / OIS::JoyStick::MAX_AXIS;
             camera->Rotate(yaw, pitch);
             //player->Rotate(pitch*100, yaw*100, 0);
 
@@ -178,6 +190,15 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt) {
         }
         for (auto& name : projs_to_remove) 
             projectiles_.erase(name);
+            
+        for (auto& pair: enemies_) {
+            Enemy& ene = pair.second;
+            ene.timeElapsed += evt.timeSinceLastFrame;
+            if (ene.timeElapsed > ene.cooldown) {
+                ene.timeElapsed = 0.0;
+                evilShot(ene.owner, Ogre::Math::UnitRandom()*70);
+            }
+        }
 		return true;
 	}
 	return false;
@@ -293,13 +314,13 @@ bool TutorialApplication::buttonReleased( const OIS::JoyStickEvent &arg, int but
     return true;
 }
 bool TutorialApplication::axisMoved( const OIS::JoyStickEvent &arg, int axis ) {
-    if (axis == 1) {
+    if (axis == MOVE_FORWARD_AXIS) {
         if (Ogre::Math::Abs(arg.state.mAxes[axis].abs) > 256)
             mDirection.z = (mMove * arg.state.mAxes[axis].abs) / OIS::JoyStick::MAX_AXIS;
         else
             mDirection.z = 0;
     }
-    if (axis == 2) {
+    if (axis == MOVE_SIDEWAYS_AXIS) {
         if (Ogre::Math::Abs(arg.state.mAxes[axis].abs) > 256)
             mDirection.x = (mMove * arg.state.mAxes[axis].abs) / OIS::JoyStick::MAX_AXIS;
         else
@@ -438,7 +459,31 @@ void TutorialApplication::shoot() {
     oBall->body()->setRestitution(1.0);
     oBall->body()->activate(true);
 
-    projectiles_.emplace(oBall->entity_name(), Projectile(oBall, 5.0));
+    projectiles_[oBall->entity_name()] = Projectile(oBall, 5.0);
+}
+void TutorialApplication::evilShot(ShipProject::GameObject* enemy, double speed) {
+    Ogre::Entity* ball = mSceneMgr->createEntity("projectile");
+	ball->setMaterialName("Projectile/Red");
+
+	Ogre::SceneNode* node = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+	Ogre::Vector3 dir = player->entity()->getParentSceneNode()->getPosition() - enemy->entity()->getParentSceneNode()->getPosition();
+	dir.normalise();
+    Ogre::Quaternion orient = Ogre::Vector3::NEGATIVE_UNIT_Z.getRotationTo(dir);
+    node->setPosition(enemy->entity()->getParentSceneNode()->getPosition() );
+	node->setOrientation(orient);
+	node->translate( orient * (Ogre::Vector3::UNIT_Z * -0.5) );
+	node->attachObject(ball);
+
+    ShipProject::GameObject* oBall = new ShipProject::GameObject(ball, 0.25);
+    oBall->SetupCollision(new btSphereShape(PROJECTILE_RADIUS), CollisionGroup::PROJECTILES_BALLS, CollisionGroup::PLAYER | CollisionGroup::WALLS);
+    objects_.push_back( oBall );
+
+    // orientatation * (original model forward vector) = direction vector
+    oBall->body()->setLinearVelocity( BtOgre::Convert::toBullet(node->getOrientation() * Ogre::Vector3::NEGATIVE_UNIT_Z * speed));
+    oBall->body()->setRestitution(1.0);
+    oBall->body()->activate(true);
+
+    projectiles_[oBall->entity_name()] = Projectile(oBall, 5.0);
 }
 
 void TutorialApplication::summonEvilBall() {
@@ -463,23 +508,43 @@ void TutorialApplication::summonEvilBall() {
     }
     oBall->body()->setRestitution(1.0);
     oBall->body()->activate(true);
+    
+    enemies_[oBall->entity_name()] = Enemy(oBall, Ogre::Math::UnitRandom() * 5);
 }
 
-#define CHECK_TYPES(a,b,t1,t2) ((a->collision_group()==t1 && b->collision_group()==t2)|| (a->collision_group()==t2 && b->collision_group()==t1))
 void TutorialApplication::handleCollisions(GameObject* obj1, GameObject* obj2, btManifoldPoint& pt) {
-    if (obj1->collision_group() == CollisionGroup::PROJECTILES_PLAYER && obj2->collision_group() == CollisionGroup::BALLS) {
-        objects_.remove(obj1);
-        objects_.remove(obj2);
-        projectiles_.erase(obj1->entity_name());
-        delete obj1;
-        delete obj2;
+    if (obj1->collision_group() == CollisionGroup::PROJECTILES_PLAYER) {
+        if (obj2->collision_group() == CollisionGroup::BALLS) {
+            objects_.remove(obj1);
+            objects_.remove(obj2);
+            projectiles_.erase(obj1->entity_name());
+            enemies_.erase(obj2->entity_name());
+            delete obj1;
+            delete obj2;
+        }
+        else if (obj2->collision_group() == CollisionGroup::WALLS) {
+        }
     }
-    else if (obj2->collision_group() == CollisionGroup::PROJECTILES_PLAYER && obj1->collision_group() == CollisionGroup::BALLS) {
-        objects_.remove(obj1);
-        objects_.remove(obj2);
-        projectiles_.erase(obj2->entity_name());
-        delete obj1;
-        delete obj2;
+    else if (obj1->collision_group() == CollisionGroup::PROJECTILES_BALLS) {
+        if (obj2->collision_group() == CollisionGroup::PLAYER) {
+            objects_.remove(obj1);
+            projectiles_.erase(obj1->entity_name());
+            delete obj1;
+        }
+        else if (obj2->collision_group() == CollisionGroup::WALLS) {
+        }
+    }
+    else if (obj1->collision_group() == CollisionGroup::BALLS) {
+        if (obj2->collision_group() == CollisionGroup::PROJECTILES_PLAYER) {
+            handleCollisions(obj2, obj1, pt);
+        }
+    }
+    else if (obj1->collision_group() == CollisionGroup::PLAYER) {
+        if (obj2->collision_group() == CollisionGroup::PROJECTILES_BALLS) {
+            handleCollisions(obj2, obj1, pt);
+        }
+    }
+    else if (obj1->collision_group() == CollisionGroup::WALLS) {
     }
 }
 
