@@ -24,6 +24,7 @@ This source file is part of the
 
 #include <functional>
 #include <string>
+#include <algorithm>
 
 #define PLAYER_RADIUS 0.7
 #define BALL_RADIUS 0.5
@@ -178,18 +179,30 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt) {
 
         }
 
-        std::list<std::string> projs_to_remove;
         for (auto& pair: projectiles_) {
             Projectile& proj = pair.second;
             proj.lifetime -= evt.timeSinceLastFrame;
             if (proj.lifetime < 0) {
-                objects_.remove(proj.owner);
-                projs_to_remove.push_back(pair.first);
-                delete proj.owner;
+                //objects_.remove(proj.owner);
+                if (std::find(projs_to_remove_.begin(), projs_to_remove_.end(), pair.first) == projs_to_remove_.end() )
+                    projs_to_remove_.push_back(pair.first);
+                //delete proj.owner;
             }
         }
-        for (auto& name : projs_to_remove) 
+        for (auto& name : projs_to_remove_) {
+            Projectile& proj = projectiles_[name];
+            objects_.remove(proj.owner);
+            delete proj.owner;
             projectiles_.erase(name);
+        }
+        projs_to_remove_.clear();
+        for (auto& name : enemies_to_remove_) {
+            Enemy& ene = enemies_[name];
+            objects_.remove(ene.owner);
+            delete ene.owner;
+            enemies_.erase(name);
+        }
+        enemies_to_remove_.clear();        
             
         for (auto& pair: enemies_) {
             Enemy& ene = pair.second;
@@ -515,21 +528,27 @@ void TutorialApplication::summonEvilBall() {
 void TutorialApplication::handleCollisions(GameObject* obj1, GameObject* obj2, btManifoldPoint& pt) {
     if (obj1->collision_group() == CollisionGroup::PROJECTILES_PLAYER) {
         if (obj2->collision_group() == CollisionGroup::BALLS) {
-            objects_.remove(obj1);
+            /*objects_.remove(obj1);
             objects_.remove(obj2);
             projectiles_.erase(obj1->entity_name());
             enemies_.erase(obj2->entity_name());
             delete obj1;
-            delete obj2;
+            delete obj2;*/
+            if (std::find(projs_to_remove_.begin(), projs_to_remove_.end(), obj1->entity_name()) == projs_to_remove_.end() )
+                projs_to_remove_.push_back(obj1->entity_name());
+            if (std::find(enemies_to_remove_.begin(), enemies_to_remove_.end(), obj2->entity_name()) == enemies_to_remove_.end() )
+                enemies_to_remove_.push_back(obj2->entity_name());
         }
         else if (obj2->collision_group() == CollisionGroup::WALLS) {
         }
     }
     else if (obj1->collision_group() == CollisionGroup::PROJECTILES_BALLS) {
         if (obj2->collision_group() == CollisionGroup::PLAYER) {
-            objects_.remove(obj1);
+            /*objects_.remove(obj1);
             projectiles_.erase(obj1->entity_name());
-            delete obj1;
+            delete obj1;*/
+            if (std::find(projs_to_remove_.begin(), projs_to_remove_.end(), obj1->entity_name()) == projs_to_remove_.end() )
+                projs_to_remove_.push_back(obj1->entity_name());
         }
         else if (obj2->collision_group() == CollisionGroup::WALLS) {
         }

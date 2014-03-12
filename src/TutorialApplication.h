@@ -70,6 +70,7 @@ protected:
             : owner(_owner), lifetime(_lifetime) {}
     };
     std::map<std::string, Projectile> projectiles_;
+    std::list<std::string> projs_to_remove_;
     
     struct Enemy {
         ShipProject::GameObject* owner;
@@ -81,6 +82,7 @@ protected:
             : owner(_owner), cooldown(_cooldown), timeElapsed(0) {}
     };
     std::map<std::string, Enemy> enemies_;
+    std::list<std::string> enemies_to_remove_;
 };
 
 #endif // #ifndef __TutorialApplication_h_
