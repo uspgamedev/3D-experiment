@@ -58,6 +58,7 @@ protected:
 	Ogre::Vector3 mDirection;     // Value to move in the correct direction
 
 	Ogre::InstanceManager* balls;
+	Ogre::ParticleSystem* explosions_;
 
     std::list<ShipProject::GameObject*> objects_;
 

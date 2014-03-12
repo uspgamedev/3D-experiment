@@ -118,6 +118,9 @@ void TutorialApplication::createScene(void) {
     };
     PhysicsManager::reference()->set_collision_logic(logic);
 
+    explosions_ = mSceneMgr->createParticleSystem("explosions", "Examples/PurpleFountain");
+    //explosions_->setMaterialName("Projectile/Red");
+             
 	// GOTTA CHECK IF WE SUPPORT THE INSTANCING TECHNIQUE (involves hardware and software)
 	
 	//balls = mSceneMgr->createInstanceManager("balls", "mySphereMesh", Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME, 
@@ -538,6 +541,14 @@ void TutorialApplication::handleCollisions(GameObject* obj1, GameObject* obj2, b
                 projs_to_remove_.push_back(obj1->entity_name());
             if (std::find(enemies_to_remove_.begin(), enemies_to_remove_.end(), obj2->entity_name()) == enemies_to_remove_.end() )
                 enemies_to_remove_.push_back(obj2->entity_name());
+                
+            Ogre::SceneNode* sceneNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+            sceneNode->setPosition(obj2->entity()->getParentSceneNode()->getPosition());
+            // attach the particle system to a scene node
+            explosions_->detachFromParent();
+            explosions_->setEmitting(true);
+            explosions_->fastForward(1.0);
+            sceneNode->attachObject(explosions_);
         }
         else if (obj2->collision_group() == CollisionGroup::WALLS) {
         }
