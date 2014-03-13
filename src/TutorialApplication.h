@@ -66,7 +66,7 @@ protected:
         ShipProject::GameObject* owner;
         double lifetime;
 
-        Projectile() = default;
+        Projectile() {};
         Projectile(ShipProject::GameObject* _owner, double _lifetime) 
             : owner(_owner), lifetime(_lifetime) {}
     };
@@ -78,7 +78,7 @@ protected:
         double cooldown;
         double timeElapsed;
 
-        Enemy() = default;
+        Enemy() {}
         Enemy(ShipProject::GameObject* _owner, double _cooldown) 
             : owner(_owner), cooldown(_cooldown), timeElapsed(0) {}
     };

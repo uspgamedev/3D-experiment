@@ -117,10 +117,10 @@ void TutorialApplication::createScene(void) {
             this->handleCollisions(obj1,obj2,pt); 
     };
     PhysicsManager::reference()->set_collision_logic(logic);
-
-    explosions_ = mSceneMgr->createParticleSystem("explosions", "Examples/PurpleFountain");
+     
+    /*explosions_ = mSceneMgr->createParticleSystem("explosions", "explosionTemplate"); //"Examples/PurpleFountain");
+    explosions_->setBounds(Ogre::AxisAlignedBox(-BALL_RADIUS, -BALL_RADIUS, -BALL_RADIUS, BALL_RADIUS, BALL_RADIUS, BALL_RADIUS));*/
     //explosions_->setMaterialName("Projectile/Red");
-             
 	// GOTTA CHECK IF WE SUPPORT THE INSTANCING TECHNIQUE (involves hardware and software)
 	
 	//balls = mSceneMgr->createInstanceManager("balls", "mySphereMesh", Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME, 
@@ -545,10 +545,13 @@ void TutorialApplication::handleCollisions(GameObject* obj1, GameObject* obj2, b
             Ogre::SceneNode* sceneNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
             sceneNode->setPosition(obj2->entity()->getParentSceneNode()->getPosition());
             // attach the particle system to a scene node
-            explosions_->detachFromParent();
-            explosions_->setEmitting(true);
-            explosions_->fastForward(1.0);
-            sceneNode->attachObject(explosions_);
+            Ogre::ParticleSystem* explo = mSceneMgr->createParticleSystem(obj2->entity_name()+"_explosion", "explosionTemplate"); //"Examples/PurpleFountain");
+            explo->setBounds(Ogre::AxisAlignedBox(-BALL_RADIUS, -BALL_RADIUS, -BALL_RADIUS, BALL_RADIUS, BALL_RADIUS, BALL_RADIUS));
+            explo->detachFromParent();
+            explo->setEmitting(true);
+            explo->fastForward(1.0);
+            sceneNode->attachObject(explo);
+            sceneNode->setScale(0.001,0.001,0.001);
         }
         else if (obj2->collision_group() == CollisionGroup::WALLS) {
         }
