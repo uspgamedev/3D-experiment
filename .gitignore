@@ -39,6 +39,10 @@ Ogre.log
 /Win32
 *.pdb
 *.opensdf
+*.suo
 /Debug
 /Release
 /RelWithDebInfo
+/ipch
+/Ogre/Dependencies
+/Ogre/include/OgreBuildSettings.h

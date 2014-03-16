@@ -23,41 +23,40 @@ Description: Utility class to load plugins statically
 
 #include "Ogre.h"
 #include "OgreConfigFile.h"
+#include "OgreBuildSettings.h"
 // Static plugin headers
-#ifdef OGRE_STATIC_CgProgramManager
+#ifdef OGRE_BUILD_PLUGIN_CG
 #  include "OgreCgPlugin.h"
 #endif
-#ifdef OGRE_STATIC_OctreeSceneManager
+#ifdef OGRE_BUILD_PLUGIN_OCTREE
 #  include "OgreOctreePlugin.h"
 #endif
-#ifdef OGRE_STATIC_ParticleFX
+#ifdef OGRE_BUILD_PLUGIN_PFX
 #  include "OgreParticleFXPlugin.h"
 #endif
-#ifdef OGRE_STATIC_BSPSceneManager
+#ifdef OGRE_BUILD_PLUGIN_BSP
 #  include "OgreBspSceneManagerPlugin.h"
 #endif
-#ifdef OGRE_STATIC_GL
+#ifdef OGRE_BUILD_RENDERSYSTEM_GL
 #  include "OgreGLPlugin.h"
 #endif
-#ifdef OGRE_STATIC_GL3Plus
+#ifdef OGRE_BUILD_RENDERSYSTEM_GL3PLUS
 #  include "OgreGL3PlusPlugin.h"
 #endif
-#ifdef OGRE_STATIC_GLES
+#ifdef OGRE_BUILD_RENDERSYSTEM_GLES
 #  include "OgreGLESPlugin.h"
 #endif
-#ifdef OGRE_STATIC_GLES2
+#ifdef OGRE_BUILD_RENDERSYSTEM_GLES2
 #  include "OgreGLES2Plugin.h"
 #endif
-#ifdef OGRE_STATIC_Direct3D9
+#ifdef OGRE_BUILD_RENDERSYSTEM_D3D9
 #  include "OgreD3D9Plugin.h"
 #endif
-#ifdef OGRE_STATIC_Direct3D11
+#ifdef OGRE_BUILD_RENDERSYSTEM_D3D11
 #  include "OgreD3D11Plugin.h"
 #endif
-#ifdef OGRE_STATIC_PCZSceneManager
+#ifdef OGRE_BUILD_PLUGIN_PCZ
 #  include "OgrePCZPlugin.h"
-#endif
-#ifdef OGRE_STATIC_OctreeZone
 #  include "OgreOctreeZonePlugin.h"
 #endif
 
@@ -75,40 +74,38 @@ namespace Ogre
 	class StaticPluginLoader
 	{
 	protected:
-#ifdef OGRE_STATIC_CgProgramManager
+#ifdef OGRE_BUILD_PLUGIN_CG
 		CgPlugin* mCgPlugin;
 #endif
-#ifdef OGRE_STATIC_OctreeSceneManager
+#ifdef OGRE_BUILD_PLUGIN_OCTREE
 		OctreePlugin* mOctreePlugin;
 #endif
-#ifdef OGRE_STATIC_ParticleFX
+#ifdef OGRE_BUILD_PLUGIN_PFX
 		ParticleFXPlugin* mParticleFXPlugin;
 #endif
-#ifdef OGRE_STATIC_BSPSceneManager
+#ifdef OGRE_BUILD_PLUGIN_BSP
 		BspSceneManagerPlugin* mBSPPlugin;
 #endif
-#ifdef OGRE_STATIC_PCZSceneManager
+#ifdef OGRE_BUILD_PLUGIN_PCZ
 		PCZPlugin* mPCZPlugin;
-#endif
-#ifdef OGRE_STATIC_OctreeZone
 		OctreeZonePlugin* mOctreeZonePlugin;
 #endif
-#ifdef OGRE_STATIC_GL
+#ifdef OGRE_BUILD_RENDERSYSTEM_GL
 		GLPlugin* mGLPlugin;
 #endif
-#ifdef OGRE_STATIC_GL3Plus
+#ifdef OGRE_BUILD_RENDERSYSTEM_GL3PLUS
 		GL3PlusPlugin* mGL3PlusPlugin;
 #endif
-#ifdef OGRE_STATIC_GLES
+#ifdef OGRE_BUILD_RENDERSYSTEM_GLES
 		GLESPlugin* mGLESPlugin;
 #endif
-#ifdef OGRE_STATIC_GLES2
+#ifdef OGRE_BUILD_RENDERSYSTEM_GLES2
 		GLES2Plugin* mGLES2Plugin;
 #endif
-#ifdef OGRE_STATIC_Direct3D9
+#ifdef OGRE_BUILD_RENDERSYSTEM_D3D9
 		D3D9Plugin* mD3D9Plugin;
 #endif
-#ifdef OGRE_STATIC_Direct3D11
+#ifdef OGRE_BUILD_RENDERSYSTEM_D3D11
 		D3D11Plugin* mD3D11Plugin;
 #endif
 	public:
@@ -118,52 +115,50 @@ namespace Ogre
 		void load()
 		{
 			Root& root  = Root::getSingleton();
-#ifdef OGRE_STATIC_GL
+#ifdef OGRE_BUILD_RENDERSYSTEM_GL
 			mGLPlugin = OGRE_NEW GLPlugin();
 			root.installPlugin(mGLPlugin);
 #endif
-#ifdef OGRE_STATIC_GL3Plus
+#ifdef OGRE_BUILD_RENDERSYSTEM_GL3PLUS
 			mGL3PlusPlugin = OGRE_NEW GL3PlusPlugin();
 			root.installPlugin(mGL3PlusPlugin);
 #endif
-#ifdef OGRE_STATIC_GLES
+#ifdef OGRE_BUILD_RENDERSYSTEM_GLES
 			mGLESPlugin = OGRE_NEW GLESPlugin();
 			root.installPlugin(mGLESPlugin);
 #endif
-#ifdef OGRE_STATIC_GLES2
+#ifdef OGRE_BUILD_RENDERSYSTEM_GLES2
 			mGLES2Plugin = OGRE_NEW GLES2Plugin();
 			root.installPlugin(mGLES2Plugin);
 #endif
-#ifdef OGRE_STATIC_Direct3D9
+#ifdef OGRE_BUILD_RENDERSYSTEM_D3D9
 			mD3D9Plugin = OGRE_NEW D3D9Plugin();
 			root.installPlugin(mD3D9Plugin);
 #endif
 
-#ifdef OGRE_STATIC_Direct3D11
+#ifdef OGRE_BUILD_RENDERSYSTEM_D3D11
 			mD3D11Plugin = OGRE_NEW D3D11Plugin();
 			root.installPlugin(mD3D11Plugin);
 #endif
-#ifdef OGRE_STATIC_CgProgramManager
+#ifdef OGRE_BUILD_PLUGIN_CG
 			mCgPlugin = OGRE_NEW CgPlugin();
 			root.installPlugin(mCgPlugin);
 #endif
-#ifdef OGRE_STATIC_OctreeSceneManager
+#ifdef OGRE_BUILD_PLUGIN_OCTREE
 			mOctreePlugin = OGRE_NEW OctreePlugin();
 			root.installPlugin(mOctreePlugin);
 #endif
-#ifdef OGRE_STATIC_ParticleFX
+#ifdef OGRE_BUILD_PLUGIN_PFX
 			mParticleFXPlugin = OGRE_NEW ParticleFXPlugin();
 			root.installPlugin(mParticleFXPlugin);
 #endif
-#ifdef OGRE_STATIC_BSPSceneManager
+#ifdef OGRE_BUILD_PLUGIN_BSP
 			mBSPPlugin = OGRE_NEW BspSceneManagerPlugin();
 			root.installPlugin(mBSPPlugin);
 #endif
-#ifdef OGRE_STATIC_PCZSceneManager
+#ifdef OGRE_BUILD_PLUGIN_PCZ
 			mPCZPlugin = OGRE_NEW PCZPlugin();
 			root.installPlugin(mPCZPlugin);
-#endif
-#ifdef OGRE_STATIC_OctreeZone
 			mOctreeZonePlugin = OGRE_NEW OctreeZonePlugin();
 			root.installPlugin(mOctreeZonePlugin);
 #endif
@@ -172,40 +167,38 @@ namespace Ogre
 		void unload()
 		{
 			// don't unload plugins, since Root will have done that. Destroy here.
-#ifdef OGRE_STATIC_OctreeZone
+#ifdef OGRE_BUILD_PLUGIN_PCZ
 			OGRE_DELETE mOctreeZonePlugin;
-#endif
-#ifdef OGRE_STATIC_PCZSceneManager
 			OGRE_DELETE mPCZPlugin;
 #endif
-#ifdef OGRE_STATIC_BSPSceneManager
+#ifdef OGRE_BUILD_PLUGIN_BSP
 			OGRE_DELETE mBSPPlugin;
 #endif
-#ifdef OGRE_STATIC_ParticleFX
+#ifdef OGRE_BUILD_PLUGIN_PFX
 			OGRE_DELETE mParticleFXPlugin;
 #endif
-#ifdef OGRE_STATIC_OctreeSceneManager
+#ifdef OGRE_BUILD_PLUGIN_OCTREE
 			OGRE_DELETE mOctreePlugin;
 #endif
-#ifdef OGRE_STATIC_CgProgramManager
+#ifdef OGRE_BUILD_PLUGIN_CG
 			OGRE_DELETE mCgPlugin;
 #endif
-#ifdef OGRE_STATIC_Direct3D9
+#ifdef OGRE_BUILD_RENDERSYSTEM_D3D9
 			OGRE_DELETE mD3D9Plugin;
 #endif
-#ifdef OGRE_STATIC_Direct3D11
+#ifdef OGRE_BUILD_RENDERSYSTEM_D3D11
 			OGRE_DELETE mD3D11Plugin;
 #endif
-#ifdef OGRE_STATIC_GL
+#ifdef OGRE_BUILD_RENDERSYSTEM_GL
 			OGRE_DELETE mGLPlugin;
 #endif
-#ifdef OGRE_STATIC_GL3Plus
+#ifdef OGRE_BUILD_RENDERSYSTEM_GL3PLUS
 			OGRE_DELETE mGL3PlusPlugin;
 #endif
-#ifdef OGRE_STATIC_GLES
+#ifdef OGRE_BUILD_RENDERSYSTEM_GLES
 			OGRE_DELETE mGLESPlugin;
 #endif
-#ifdef OGRE_STATIC_GLES2
+#ifdef OGRE_BUILD_RENDERSYSTEM_GLES2
 			OGRE_DELETE mGLES2Plugin;
 #endif
             
