@@ -78,8 +78,6 @@ endif ()
 include(OgreGetVersion)
 ogre_get_version(${OGRE_SOURCE_DIR}/OgreMain/include/OgrePrerequisites.h)
 message(STATUS "Configuring OGRE ${OGRE_VERSION}")
-# Configure version file for use by scripts
-configure_file("${OGRE_TEMPLATES_DIR}/version.txt.in" "${OGRE_BINARY_DIR}/version.txt" @ONLY)
 
 # determine if we are compiling for a 32bit or 64bit system
 include(CheckTypeSize)
@@ -222,18 +220,6 @@ set(OGRE_Volume_LIBRARIES OgreVolume)
 set(OGRE_Plugin_PCZSceneManager_LIBRARIES Plugin_PCZSceneManager)
 set(OGRE_Plugin_OctreeZone_LIBRARIES Plugin_OctreeZone)
 
-# Specify build paths
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${OGRE_BINARY_DIR}/lib")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${OGRE_BINARY_DIR}/lib")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${OGRE_BINARY_DIR}/bin")
-if (WIN32 OR APPLE)
-  if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    # We don't want to install in default system location, install is really for the SDK, so call it that
-    set(CMAKE_INSTALL_PREFIX
-	  "${OGRE_BINARY_DIR}/sdk" CACHE PATH "OGRE install prefix" FORCE
-    )
-  endif (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-endif(WIN32 OR APPLE)
 
 # Set up iOS overrides.
 if (OGRE_BUILD_PLATFORM_APPLE_IOS)
@@ -360,7 +346,7 @@ endif()
 ######################################################################
 
 # Customise what to build
-cmake_dependent_option(OGRE_STATIC "Static build" FALSE "" TRUE)
+cmake_dependent_option(OGRE_STATIC "Static build" TRUE "" TRUE)
 cmake_dependent_option(OGRE_BUILD_RENDERSYSTEM_D3D9 "Build Direct3D9 RenderSystem" TRUE "WIN32;DirectX9_FOUND;NOT OGRE_BUILD_PLATFORM_WINRT;NOT OGRE_BUILD_PLATFORM_WINDOWS_PHONE" FALSE)
 cmake_dependent_option(OGRE_BUILD_RENDERSYSTEM_D3D11 "Build Direct3D11 RenderSystem [EXPERIMENTAL]" TRUE "WIN32;DirectX11_FOUND  OR OGRE_BUILD_PLATFORM_WINRT OR OGRE_BUILD_PLATFORM_WINDOWS_PHONE" FALSE)
 cmake_dependent_option(OGRE_BUILD_RENDERSYSTEM_GL3PLUS "Build OpenGL 3+ RenderSystem [EXPERIMENTAL]" FALSE "OPENGL_FOUND; NOT OGRE_BUILD_RENDERSYSTEM_GLES; NOT OGRE_BUILD_RENDERSYSTEM_GLES2" FALSE)
@@ -424,24 +410,10 @@ cmake_dependent_option(OGRE_CONFIG_ENABLE_GL_STATE_CACHE_SUPPORT "Enable OpenGL 
 cmake_dependent_option(OGRE_CONFIG_ENABLE_GLES3_SUPPORT "Enable OpenGL ES 3.x Features" FALSE "OPENGLES3_FOUND;OGRE_BUILD_RENDERSYSTEM_GLES2;NOT OGRE_BUILD_PLATFORM_WINRT;NOT OGRE_BUILD_PLATFORM_WINDOWS_PHONE" FALSE)
 cmake_dependent_option(OGRE_CONFIG_ENABLE_LIBCPP_SUPPORT "Enable libc++ support for OS X" FALSE "APPLE" FALSE)
 cmake_dependent_option(OGRE_USE_BOOST "Use Boost extensions" TRUE "Boost_FOUND" FALSE)
-# Customise what to install
-option(OGRE_INSTALL_SAMPLES "Install Ogre demos." TRUE)
-option(OGRE_INSTALL_TOOLS "Install Ogre tools." TRUE)
-option(OGRE_BUILD_DOCS "Generate documentation target for build if Doxygen is installed." TRUE)
-option(OGRE_INSTALL_DOCS "Install documentation." TRUE)
-option(OGRE_INSTALL_SAMPLES_SOURCE "Install samples source files." FALSE)
-cmake_dependent_option(OGRE_INSTALL_PDB "Install debug pdb files" TRUE "MSVC" FALSE)
-cmake_dependent_option(OGRE_FULL_RPATH "Build executables with the full required RPATH to run from their install location." FALSE "NOT WIN32" FALSE)
+
 option(OGRE_PROFILING "Enable internal profiling support." FALSE)
-cmake_dependent_option(OGRE_CONFIG_STATIC_LINK_CRT "Statically link the MS CRT dlls (msvcrt)" FALSE "MSVC" FALSE)
+cmake_dependent_option(OGRE_CONFIG_STATIC_LINK_CRT "Statically link the MS CRT dlls (msvcrt)" TRUE "MSVC" FALSE)
 set(OGRE_LIB_DIRECTORY "lib${LIB_SUFFIX}" CACHE STRING "Install path for libraries, e.g. 'lib64' on some 64-bit Linux distros.")
-if (WIN32)
-	option(OGRE_INSTALL_VSPROPS "Install Visual Studio Property Page." FALSE)
-	if (OGRE_INSTALL_VSPROPS)
-		configure_file(${OGRE_TEMPLATES_DIR}/OGRE.props.in ${OGRE_BINARY_DIR}/OGRE.props)
-		install(FILES ${OGRE_BINARY_DIR}/OGRE.props DESTINATION "${CMAKE_INSTALL_PREFIX}")
-	endif ()
-endif ()
 
 # Unity build options
 # A Unity build includes all sources files in just a few actual compilation units
@@ -495,9 +467,6 @@ endif()
 # Now setup targets
 ##################################################################
 
-# install resource files
-include(InstallResources)
-
 # Setup OgreMain project
 add_subdirectory(OgreMain)
 
@@ -510,49 +479,108 @@ add_subdirectory(PlugIns)
 # Setup Components
 add_subdirectory(Components)
 
-# Setup tests (before samples so that PlayPen is included in browser)
-if (OGRE_BUILD_TESTS)
-  # enable CTest
-  ENABLE_TESTING()
-  INCLUDE(CTest)
-  add_subdirectory(Tests)
-endif ()
-
-# Setup samples
-add_subdirectory(Samples)
-
 #Add android JNI binding
 if(ANDROID)
   include(toolchain/AndroidJNI)
 endif()
 
-# Setup command-line tools
-if (OGRE_BUILD_TOOLS)
-  add_subdirectory(Tools)
-endif ()
-
-# Setup XSIExporter
-if (OGRE_BUILD_XSIEXPORTER)
-  add_subdirectory(Tools/XSIExport)
-endif ()
-
-# Install documentation
-if (OGRE_BUILD_DOCS)
-  add_subdirectory(Docs)
-endif ()
-
-# Install media files
-if (OGRE_INSTALL_SAMPLES OR OGRE_INSTALL_SAMPLES_SOURCE)
-  add_subdirectory(Samples/Media)
-endif ()
-
 # Install CMake modules
 add_subdirectory(CMake)
-
-# Provide CPack packaging target
-include(Packaging)
-
 
 # Show feature summary
 include(FeatureSummary)
 
+####################################
+# Setting list of libraries and list of include dirs for parent project
+list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/include)
+list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/OgreMain/include)
+list (APPEND ALL_OGRE_LIBRARIES OgreMain)
+if (OGRE_BUILD_RENDERSYSTEM_GLES2)
+    list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/RenderSystems/GLES2/src/GLSLES/include)
+    list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/RenderSystems/GLES2/include)
+    list (APPEND ALL_OGRE_LIBRARIES RenderSystem_GLES2)
+endif(OGRE_BUILD_RENDERSYSTEM_GLES2)
+if (OGRE_BUILD_RENDERSYSTEM_GLES)
+    list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/RenderSystems/GLES/include)
+    list (APPEND ALL_OGRE_LIBRARIES RenderSystem_GLES)
+endif(OGRE_BUILD_RENDERSYSTEM_GLES)
+if (OGRE_BUILD_RENDERSYSTEM_GL3PLUS)
+    list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/RenderSystems/GL3Plus/src/GLSL/include)
+    list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/RenderSystems/GL3Plus/include)
+    list (APPEND ALL_OGRE_LIBRARIES RenderSystem_GL3Plus)
+endif(OGRE_BUILD_RENDERSYSTEM_GL3PLUS)
+if (OGRE_BUILD_RENDERSYSTEM_GL)
+    list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/RenderSystems/GL/src/GLSL/include)
+    list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/RenderSystems/GL/src/atifs/include)
+    list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/RenderSystems/GL/include)
+    list (APPEND ALL_OGRE_LIBRARIES RenderSystem_GL)
+endif(OGRE_BUILD_RENDERSYSTEM_GL)
+if (OGRE_BUILD_RENDERSYSTEM_D3D9)
+    list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/RenderSystems/Direct3D9/include)
+    list (APPEND ALL_OGRE_LIBRARIES RenderSystem_Direct3D9)
+endif(OGRE_BUILD_RENDERSYSTEM_D3D9)
+if (OGRE_BUILD_RENDERSYSTEM_D3D11)
+    list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/RenderSystems/Direct3D11/include)
+    list (APPEND ALL_OGRE_LIBRARIES RenderSystem_Direct3D11)
+endif(OGRE_BUILD_RENDERSYSTEM_D3D11)
+if (OGRE_BUILD_PLUGIN_PCZ)
+    list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/PlugIns/PCZSceneManager/include)
+    list (APPEND ALL_OGRE_LIBRARIES Plugin_PCZSceneManager)
+    list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/PlugIns/OctreeZone/include)
+    list (APPEND ALL_OGRE_LIBRARIES Plugin_OctreeZone)
+endif(OGRE_BUILD_PLUGIN_PCZ)
+if (OGRE_BUILD_PLUGIN_PFX)
+    list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/PlugIns/ParticleFX/include)
+    list (APPEND ALL_OGRE_LIBRARIES Plugin_ParticleFX)
+endif(OGRE_BUILD_PLUGIN_PFX)
+if (OGRE_BUILD_PLUGIN_OCTREE)
+    list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/PlugIns/OctreeSceneManager/include)
+    list (APPEND ALL_OGRE_LIBRARIES Plugin_OctreeSceneManager)
+endif(OGRE_BUILD_PLUGIN_OCTREE)
+if (OGRE_BUILD_PLUGIN_CG)
+    list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/PlugIns/CgProgramManager/include)
+    list (APPEND ALL_OGRE_LIBRARIES Plugin_CgProgramManager)
+endif(OGRE_BUILD_PLUGIN_CG)
+if (OGRE_BUILD_PLUGIN_BSP)
+    list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/PlugIns/BSPSceneManager/include)
+    list (APPEND ALL_OGRE_LIBRARIES Plugin_BSPSceneManager)
+endif(OGRE_BUILD_PLUGIN_BSP)
+if (OGRE_BUILD_COMPONENT_VOLUME)
+    list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/Components/Volume/include)
+    list (APPEND ALL_OGRE_LIBRARIES OgreVolume)
+endif(OGRE_BUILD_COMPONENT_VOLUME)
+if (OGRE_BUILD_COMPONENT_TERRAIN)
+    list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/Components/Terrain/include)
+    list (APPEND ALL_OGRE_LIBRARIES OgreTerrain)
+endif(OGRE_BUILD_COMPONENT_TERRAIN)
+if (OGRE_BUILD_COMPONENT_RTSHADERSYSTEM)
+    list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/Components/RTShaderSystem/include)
+    list (APPEND ALL_OGRE_LIBRARIES OgreRTShaderSystem)
+endif(OGRE_BUILD_COMPONENT_RTSHADERSYSTEM)
+if (OGRE_BUILD_COMPONENT_PROPERTY)
+    list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/Components/Property/include)
+    list (APPEND ALL_OGRE_LIBRARIES OgreProperty)
+endif(OGRE_BUILD_COMPONENT_PROPERTY)
+if (OGRE_BUILD_COMPONENT_PAGING)
+    list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/Components/Paging/include)
+    list (APPEND ALL_OGRE_LIBRARIES OgrePaging)
+endif(OGRE_BUILD_COMPONENT_PAGING)
+if (OGRE_BUILD_COMPONENT_OVERLAY)
+    list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/Components/Overlay/include)
+    list (APPEND ALL_OGRE_LIBRARIES OgreOverlay)
+endif(OGRE_BUILD_COMPONENT_OVERLAY)
+if (OGREDEPS_BUILD_OIS OR OIS_FOUND)
+    list (APPEND ALL_OGRE_INCLUDE_DIRS ${OIS_INCLUDE_DIR})
+    list (APPEND ALL_OGRE_LIBRARIES OIS)
+endif(OGREDEPS_BUILD_OIS OR OIS_FOUND)
+
+#list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/Dependencies/src/ois/includes)
+#list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/Dependencies/src/NVAPI-R313-developer/include)
+#list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/Dependencies/src/freetype/include)
+#list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/Dependencies/src/FreeImage/Source/LibOpenJPEG/opj_includes.h)
+#list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/Dependencies/src/FreeImage/Source/LibJPEG/jinclude.h)
+#list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/Dependencies/src/Cg/include)
+#list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/Dependencies/src/AMD_Quad_Buffer_SDK_v11/include)
+
+set(OGRE_INCLUDE_DIRS ${ALL_OGRE_INCLUDE_DIRS} PARENT_SCOPE)
+set(OGRE_LIBRARIES ${ALL_OGRE_LIBRARIES} PARENT_SCOPE)

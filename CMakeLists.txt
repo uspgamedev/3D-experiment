@@ -27,14 +27,12 @@ IF (NOT CMAKE_BUILD_TYPE)
  SET(CMAKE_BUILD_TYPE "Release")
 ENDIF (NOT CMAKE_BUILD_TYPE) 
 
+set(OGRE_STATIC TRUE CACHE BOOL "Forcing static build" FORCE)
+set(OGRE_ARCHIVE_OUTPUT ${CMAKE_SOURCE_DIR}/bin)
+set(OGRE_LIBRARY_OUTPUT ${CMAKE_SOURCE_DIR}/bin)
+set(OGRE_RUNTIME_OUTPUT ${CMAKE_SOURCE_DIR}/bin)
+add_subdirectory(Ogre)
 
-find_package(OGRE REQUIRED)
-find_package(OIS REQUIRED)
- 
-if(NOT OIS_FOUND)
-	message(SEND_ERROR "Failed to find OIS.")
-endif()
- 
 # Find Boost
 if (NOT OGRE_BUILD_PLATFORM_IPHONE)
 	if (WIN32 OR APPLE)
@@ -92,7 +90,6 @@ if (MSVC)
         string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
     endforeach()
 ENDIF(MSVC)
-    
 
 if (UNIX OR MINGW)
   # se for o g++ para *nix ou o MinGW para Windows:
@@ -118,13 +115,10 @@ set(SRCS
 include_directories ("src")
 
 add_subdirectory(BulletPhysics)
-
 add_subdirectory(btogre)
 
 include_directories( ${OIS_INCLUDE_DIRS}
 	${OGRE_INCLUDE_DIRS}
-	${OGRE_Overlay_INCLUDE_DIRS}
-    $ENV{OGRE_HOME}/Samples/Common/include
     ${BULLET_INCLUDE_DIRS}
     ${BTOGRE_INCLUDE_DIRS}
 )
@@ -133,7 +127,6 @@ add_executable(ShipProject ${SRCS})
  
 target_link_libraries(ShipProject ${OGRE_LIBRARIES} 
                                   ${OIS_LIBRARIES} 
-                                  ${OGRE_Overlay_LIBRARIES} 
                                   ${BULLET_LIBRARIES}
                                   ${BTOGRE_LIBRARIES})
  

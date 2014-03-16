@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 2.8.0)
 
 project(BtOgre)
 
-find_package(OGRE REQUIRED)
-
 include_directories(
     ${CMAKE_CURRENT_LIST_DIR}/include/
     ${BULLET_INCLUDE_DIRS}

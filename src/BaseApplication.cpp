@@ -23,7 +23,6 @@ BaseApplication::BaseApplication(void)
     mSceneMgr(0),
     mWindow(0),
     mResourcesCfg(Ogre::StringUtil::BLANK),
-    mPluginsCfg(Ogre::StringUtil::BLANK),
     mTrayMgr(0),
     mCameraMan(0),
     mDetailsPanel(0),
@@ -45,6 +44,7 @@ BaseApplication::~BaseApplication(void)
     Ogre::WindowEventUtilities::removeWindowEventListener(mWindow, this);
     windowClosed(mWindow);
     delete mRoot;
+    staticLoader_.unload();
 }
 
 //-------------------------------------------------------------------------------------
@@ -207,10 +207,8 @@ void BaseApplication::go(void)
 {
 #ifdef _DEBUG
     mResourcesCfg = "resources_d.cfg";
-    mPluginsCfg = "plugins_d.cfg";
 #else
     mResourcesCfg = "resources.cfg";
-    mPluginsCfg = "plugins.cfg";
 #endif
 
     if (!setup())
@@ -224,8 +222,9 @@ void BaseApplication::go(void)
 //-------------------------------------------------------------------------------------
 bool BaseApplication::setup(void)
 {
-    mRoot = new Ogre::Root(mPluginsCfg);
-
+    mRoot = new Ogre::Root("");
+    staticLoader_.load();
+    
     setupResources();
 
     bool carryOn = configure();

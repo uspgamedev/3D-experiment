@@ -26,6 +26,8 @@ This source file is part of the
 #include <OgreRenderWindow.h>
 #include <OgreConfigFile.h>
 
+#include <OgreStaticPluginLoader.h>
+
 #include <OISEvents.h>
 #include <OISInputManager.h>
 #include <OISKeyboard.h>
@@ -84,8 +86,9 @@ protected:
     Ogre::SceneManager* mSceneMgr;
     Ogre::RenderWindow* mWindow;
     Ogre::String mResourcesCfg;
-    Ogre::String mPluginsCfg;
 	Ogre::OverlaySystem *mOverlaySystem;
+    
+    Ogre::StaticPluginLoader staticLoader_;
 
     // OgreBites
     OgreBites::SdkTrayManager* mTrayMgr;
