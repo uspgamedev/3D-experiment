@@ -44,6 +44,6 @@ Ogre.log
 /Release
 /RelWithDebInfo
 /ipch
-/Ogre/Dependencies
-/Ogre/include/OgreBuildSettings.h
-/Ogre/pkgconfig
+/externals/Ogre/Dependencies
+/externals/Ogre/include/OgreBuildSettings.h
+/externals/Ogre/pkgconfig

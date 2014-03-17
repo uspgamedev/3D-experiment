@@ -502,7 +502,7 @@ if (MSVC)
     ###
     # note: backslashes because this is copied verbatim to the linker and windows uses theses slashes.
     # note2: CMAKE_BUILD_TYPE will probable be wrong...
-    list(APPEND ALL_OGRE_LIBRARIES "Ogre\\OgreMain\\OgreMain.dir\\${CMAKE_BUILD_TYPE}\\OgreWin32Resources.res")
+    list(APPEND ALL_OGRE_LIBRARIES "externals\\Ogre\\OgreMain\\OgreMain.dir\\${CMAKE_BUILD_TYPE}\\OgreWin32Resources.res")
 endif (MSVC)
 if (OGRE_BUILD_RENDERSYSTEM_GLES2)
     list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/RenderSystems/GLES2/src/GLSLES/include)
@@ -550,7 +550,9 @@ if (OGRE_BUILD_PLUGIN_OCTREE)
 endif(OGRE_BUILD_PLUGIN_OCTREE)
 if (OGRE_BUILD_PLUGIN_CG)
     list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/PlugIns/CgProgramManager/include)
-    list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/Dependencies/src/Cg/include)
+    if (OGREDEPS_BUILD_CG)
+        list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/Dependencies/src/Cg/include)
+    endif(OGREDEPS_BUILD_CG)
     list (APPEND ALL_OGRE_LIBRARIES Plugin_CgProgramManager)
 endif(OGRE_BUILD_PLUGIN_CG)
 if (OGRE_BUILD_PLUGIN_BSP)
@@ -581,18 +583,12 @@ if (OGRE_BUILD_COMPONENT_OVERLAY)
     list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/Components/Overlay/include)
     list (APPEND ALL_OGRE_LIBRARIES OgreOverlay)
 endif(OGRE_BUILD_COMPONENT_OVERLAY)
-if (OGREDEPS_BUILD_OIS OR OIS_FOUND)
-    list (APPEND ALL_OGRE_INCLUDE_DIRS ${OIS_INCLUDE_DIR})
-    list (APPEND ALL_OGRE_LIBRARIES OIS)
-endif(OGREDEPS_BUILD_OIS OR OIS_FOUND)
 
-#list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/Dependencies/src/ois/includes)
-#list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/Dependencies/src/NVAPI-R313-developer/include)
-#list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/Dependencies/src/freetype/include)
-#list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/Dependencies/src/FreeImage/Source/LibOpenJPEG/opj_includes.h)
-#list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/Dependencies/src/FreeImage/Source/LibJPEG/jinclude.h)
-#list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/Dependencies/src/Cg/include)
-#list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/Dependencies/src/AMD_Quad_Buffer_SDK_v11/include)
+list (APPEND ALL_OGRE_INCLUDE_DIRS ${OIS_INCLUDE_DIR}) #  THIS IS REALLY UGLY
+list (APPEND ALL_OGRE_LIBRARIES OIS)                   #
 
-set(OGRE_INCLUDE_DIRS ${ALL_OGRE_INCLUDE_DIRS} PARENT_SCOPE)
-set(OGRE_LIBRARIES ${ALL_OGRE_LIBRARIES} PARENT_SCOPE)
+
+add_library(OgreAll STATIC IMPORTED GLOBAL)
+target_link_libraries(OgreAll LINK_INTERFACE_LIBRARIES ${ALL_OGRE_LIBRARIES})
+set_target_properties(OgreAll PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${ALL_OGRE_INCLUDE_DIRS}")
