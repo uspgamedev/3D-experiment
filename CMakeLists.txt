@@ -24,7 +24,7 @@ if(UNIX)
 endif(UNIX)
  
 IF (NOT CMAKE_BUILD_TYPE)
- SET(CMAKE_BUILD_TYPE "Release")
+ set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Choose the type of build, options are: None (CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel." FORCE)
 ENDIF (NOT CMAKE_BUILD_TYPE) 
 
 set(OGRE_STATIC TRUE CACHE BOOL "Forcing static build" FORCE)

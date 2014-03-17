@@ -499,7 +499,10 @@ if (MSVC)
     # need to do this to fix using the default config dialog on windows/msvc.
     # and we need to link to the res file using a relative path to the root project, so that's why there an 'Ogre/'
     # prefix in the path.
-    list(APPEND ALL_OGRE_LIBRARIES Ogre/OgreMain/OgreMain.dir/${CMAKE_BUILD_TYPE}/OgreWin32Resources.res)
+    ###
+    # note: backslashes because this is copied verbatim to the linker and windows uses theses slashes.
+    # note2: CMAKE_BUILD_TYPE will probable be wrong...
+    list(APPEND ALL_OGRE_LIBRARIES "Ogre\\OgreMain\\OgreMain.dir\\${CMAKE_BUILD_TYPE}\\OgreWin32Resources.res")
 endif (MSVC)
 if (OGRE_BUILD_RENDERSYSTEM_GLES2)
     list (APPEND ALL_OGRE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/RenderSystems/GLES2/src/GLSLES/include)
