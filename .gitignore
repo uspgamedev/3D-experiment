@@ -46,3 +46,4 @@ Ogre.log
 /ipch
 /Ogre/Dependencies
 /Ogre/include/OgreBuildSettings.h
+/Ogre/pkgconfig

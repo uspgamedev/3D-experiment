@@ -36,11 +36,13 @@ This source file is part of the
 #define MOVE_SIDEWAYS_AXIS  2
 #define CAMERA_YAW_VALUE    joy.mAxes[0].abs
 #define CAMERA_PITCH_VALUE  joy.mSliders[0].abX
+#define EXPLOSION_TEMPLATE "explosionTemplate"
 #else
 #define MOVE_FORWARD_AXIS   1
 #define MOVE_SIDEWAYS_AXIS  0
 #define CAMERA_YAW_VALUE    joy.mAxes[2].abs
 #define CAMERA_PITCH_VALUE  joy.mAxes[3].abs
+#define EXPLOSION_TEMPLATE "RedFountain"
 #endif
 
 using ShipProject::PhysicsManager;
@@ -199,22 +201,36 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt) {
             projectiles_.erase(name);
         }
         projs_to_remove_.clear();
+            
+        for (auto& pair: enemies_) {
+            Enemy& ene = pair.second;
+            if (ene.owner->entity()->getVisible()) {
+                ene.timeElapsed += evt.timeSinceLastFrame;
+                if (ene.timeElapsed > ene.cooldown) {
+                    ene.timeElapsed = 0.0;
+                    evilShot(ene.owner, Ogre::Math::UnitRandom()*70);
+                }
+            }
+            else if (ene.particles != nullptr) {
+                if (! ene.particles->getEmitter(0)->getEnabled()) {
+                    if (std::find(enemies_to_remove_.begin(), enemies_to_remove_.end(), ene.owner->entity_name()) == enemies_to_remove_.end() )
+                        enemies_to_remove_.push_back(ene.owner->entity_name());
+                }
+            }
+        }
         for (auto& name : enemies_to_remove_) {
             Enemy& ene = enemies_[name];
             objects_.remove(ene.owner);
             delete ene.owner;
+            if (ene.particles != nullptr) {
+                Ogre::SceneNode* node = ene.particles->getParentSceneNode();
+                node->removeAndDestroyAllChildren();
+                mSceneMgr->destroySceneNode(node);
+                mSceneMgr->destroyParticleSystem(ene.particles);
+            }
             enemies_.erase(name);
         }
         enemies_to_remove_.clear();        
-            
-        for (auto& pair: enemies_) {
-            Enemy& ene = pair.second;
-            ene.timeElapsed += evt.timeSinceLastFrame;
-            if (ene.timeElapsed > ene.cooldown) {
-                ene.timeElapsed = 0.0;
-                evilShot(ene.owner, Ogre::Math::UnitRandom()*70);
-            }
-        }
 		return true;
 	}
 	return false;
@@ -531,26 +547,20 @@ void TutorialApplication::summonEvilBall() {
 void TutorialApplication::handleCollisions(GameObject* obj1, GameObject* obj2, btManifoldPoint& pt) {
     if (obj1->collision_group() == CollisionGroup::PROJECTILES_PLAYER) {
         if (obj2->collision_group() == CollisionGroup::BALLS) {
-            /*objects_.remove(obj1);
-            objects_.remove(obj2);
-            projectiles_.erase(obj1->entity_name());
-            enemies_.erase(obj2->entity_name());
-            delete obj1;
-            delete obj2;*/
             if (std::find(projs_to_remove_.begin(), projs_to_remove_.end(), obj1->entity_name()) == projs_to_remove_.end() )
                 projs_to_remove_.push_back(obj1->entity_name());
-            if (std::find(enemies_to_remove_.begin(), enemies_to_remove_.end(), obj2->entity_name()) == enemies_to_remove_.end() )
-                enemies_to_remove_.push_back(obj2->entity_name());
-                
+            //if (std::find(enemies_to_remove_.begin(), enemies_to_remove_.end(), obj2->entity_name()) == enemies_to_remove_.end() )
+            //    enemies_to_remove_.push_back(obj2->entity_name());
+            obj2->entity()->setVisible(false);
             Ogre::SceneNode* sceneNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
             sceneNode->setPosition(obj2->entity()->getParentSceneNode()->getPosition());
-            // attach the particle system to a scene node
-            Ogre::ParticleSystem* explo = mSceneMgr->createParticleSystem(obj2->entity_name()+"_explosion", "explosionTemplate"); //"Examples/PurpleFountain");
-            explo->setBounds(Ogre::AxisAlignedBox(-BALL_RADIUS, -BALL_RADIUS, -BALL_RADIUS, BALL_RADIUS, BALL_RADIUS, BALL_RADIUS));
-            explo->detachFromParent();
-            explo->setEmitting(true);
-            explo->fastForward(1.0);
-            sceneNode->attachObject(explo);
+            Enemy& ene = enemies_[obj2->entity_name()];
+            ene.particles = mSceneMgr->createParticleSystem(obj2->entity_name()+"_explosion", EXPLOSION_TEMPLATE);
+            ene.particles->setBounds(Ogre::AxisAlignedBox(-BALL_RADIUS, -BALL_RADIUS, -BALL_RADIUS, BALL_RADIUS, BALL_RADIUS, BALL_RADIUS));
+            ene.particles->detachFromParent();
+            ene.particles->setEmitting(true);
+            ene.particles->fastForward(1.0);
+            sceneNode->attachObject(ene.particles);
             sceneNode->setScale(0.001,0.001,0.001);
         }
         else if (obj2->collision_group() == CollisionGroup::WALLS) {

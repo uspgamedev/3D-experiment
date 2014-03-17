@@ -75,12 +75,13 @@ protected:
     
     struct Enemy {
         ShipProject::GameObject* owner;
+        Ogre::ParticleSystem* particles;
         double cooldown;
         double timeElapsed;
 
         Enemy() {}
         Enemy(ShipProject::GameObject* _owner, double _cooldown) 
-            : owner(_owner), cooldown(_cooldown), timeElapsed(0) {}
+            : owner(_owner), particles(nullptr), cooldown(_cooldown), timeElapsed(0) {}
     };
     std::map<std::string, Enemy> enemies_;
     std::list<std::string> enemies_to_remove_;
