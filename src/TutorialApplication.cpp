@@ -42,7 +42,7 @@ This source file is part of the
 #define MOVE_SIDEWAYS_AXIS  0
 #define CAMERA_YAW_VALUE    joy.mAxes[2].abs
 #define CAMERA_PITCH_VALUE  joy.mAxes[3].abs
-#define EXPLOSION_TEMPLATE "RedFountain"
+#define EXPLOSION_TEMPLATE "Examples/PurpleFountain"
 #endif
 
 using ShipProject::PhysicsManager;

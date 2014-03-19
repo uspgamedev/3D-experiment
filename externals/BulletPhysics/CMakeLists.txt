@@ -139,19 +139,20 @@ ENDIF(COMMAND cmake_policy)
 add_subdirectory(src)
 add_subdirectory(Extras)
 
-list (APPEND BULLET_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/src)
-list (APPEND BULLET_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/Extras)
+update_list(BULLET_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/src)
+update_list(BULLET_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/Extras)
 
-list (APPEND BULLET_LIBRARIES LinearMath)
-list (APPEND BULLET_LIBRARIES BulletCollision)
-list (APPEND BULLET_LIBRARIES BulletDynamics)
-list (APPEND BULLET_LIBRARIES BulletSoftBody)
+update_list(BULLET_LIBRARIES LinearMath)
+update_list(BULLET_LIBRARIES BulletCollision)
+update_list(BULLET_LIBRARIES BulletDynamics)
+update_list(BULLET_LIBRARIES BulletSoftBody)
 IF (BUILD_MULTITHREADING)
-    list (APPEND BULLET_LIBRARIES BulletMultiThreaded)
+    update_list(BULLET_LIBRARIES BulletMultiThreaded)
 ENDIF(BUILD_MULTITHREADING)
 
-add_library(BulletAll STATIC IMPORTED GLOBAL)
-target_link_libraries(BulletAll LINK_INTERFACE_LIBRARIES ${BULLET_LIBRARIES})
-set_target_properties(BulletAll PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES "${BULLET_INCLUDE_DIRS}")
+
+#add_library(BulletAll STATIC IMPORTED GLOBAL)
+#target_link_libraries(BulletAll LINK_INTERFACE_LIBRARIES ${BULLET_LIBRARIES})
+#set_target_properties(BulletAll PROPERTIES
+#        INTERFACE_INCLUDE_DIRECTORIES "${BULLET_INCLUDE_DIRS}")
 

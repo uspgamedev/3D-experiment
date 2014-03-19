@@ -43,7 +43,21 @@ if (UNIX OR MINGW)
   endif()
 endif ()
 
+set (BULLET_INCLUDE_DIRS "" CACHE INTERNAL "Bullet external include directories")
+set (BULLET_LIBRARIES "" CACHE INTERNAL "Compiled Bullet libraries")
+set (OGRE_INCLUDE_DIRS "" CACHE INTERNAL "Ogre external include directories")
+set (OGRE_LIBRARIES "" CACHE INTERNAL "Compiled Ogre libraries")
+
+macro(update_list LISTNAME VALUE)
+    set(${LISTNAME} "${${LISTNAME}};${VALUE}" CACHE INTERNAL "")
+endmacro()
+
 add_subdirectory(externals)
+
+message("bullet dirs: ${BULLET_INCLUDE_DIRS}")
+message("bullet libs: ${BULLET_LIBRARIES}")
+message("ogre dirs: ${OGRE_INCLUDE_DIRS}")
+message("ogre libs: ${OGRE_LIBRARIES}")
 
 # PROJECT SOURCES
 set(SRCS
@@ -63,6 +77,5 @@ add_executable(ShipProject ${SRCS})
 target_include_directories(ShipProject 
     PRIVATE "src"
 )
- 
-target_link_libraries(ShipProject BtOgre)
- 
+
+target_link_libraries(ShipProject ${BULLET_LIBRARIES} ${OGRE_LIBRARIES} BtOgre)
