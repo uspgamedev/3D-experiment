@@ -1,57 +1,53 @@
 3D-experiment
 =============
 
-Proof of concept for a 3D game engine using Ogre (v1.9 forward) and Bullet (v2.82 forward, included).
+Proof of concept for a 3D game engine using Ogre (v1.9 forward, included) and Bullet (v2.82 forward, included).
 
 -------------------------------
  RUNNING THE PROGRAM
 -------------------------------
-When initializing, Ogre loads some dynamic plugins, most importantly the render systems.
-Ogre knows which plugins and where to load them from thanks to the <>/bin/plugins(_d).cfg
-file.
-At this time, you'll probably need to alter this file to suit your dev-environment.
-
 Project's <>/bin/media folder wasn't included in the repository (so far), you'll need to download
 it from somewhere else. Ask the devs!
+
 
 
 -------------------------------
  Compilation Notes
 -------------------------------
--Tested in Win7/VS2012, precompiled Ogre SDK
--Tested in Linux, built Ogre SDK from source
+-Tested in Win7/VS2013 and Linux
 
 BUILDING THE PROJECT (3D-experiment/ShipProject)
 On Visual Studio: after generating VS projects, you'll need to set the ShipProject as start-up project,
 and working directory as the <project folder>/bin folder - this is where the executable is placed, so you
 can use the macro $(TargetDir) as well.
+You might need to fix the cg.dll directory from <>/bin/?/cg.dll to <>/bin/cg.dll after running cmake/compiling.
 
 BUILDING BULLET:
-We've included a Bullet Physics engine build along with this project, and it should not
+We've included a Bullet Physics (v2.82) engine build along with this project, and it should not
 cause any problems when compiling.
-
 However, Bullet's CMake option "USE_DOUBLE_PRECISION" is known to cause linking errors if ON.
-We could alter our Bullet build to fix this, but haven't so far.
 
 BUILDING OGRE:
-Ogre uses several external libraries, and it includes some of them.
-However, while Ogre's CMake will complain if some are not available (like Boost),
+We've also included a Ogre build (v1.9.0) along with this project, in order to compile and link Ogre statically.
+Ogre uses several external libraries, however, while Ogre's CMake will complain if some are not available (like Boost),
 it will say nothing about others and then when you try to use Ogre some (important)
 stuff might not work.
 
-Libs we noticed that you might have missed:
--libzzip: without it, Ogre will be uncapable of loading resources from .zip files,
-    which we use. Might prevent game from loading at all, and log shows exception
-    about not being able to load a .zip file.
--FreeImage: without it, Ogre will be uncapable of loading pretty much any texture file.
-    And any you try to render will show up as a striped black/yellow pattern. Ogre log
-    will show exceptions about not finding a codec for the texture extension you've tried.
-    
-If any of this happened, you will need to install the lib, re-generate Ogre's CMake
-and rebuild/reinstall Ogre, and afterwards rebuild your app.
+In Windows/VS2013, it is likely that you do not have Ogre's dependencies installed, in this case it's best
+to download our Ogre dependencies pack and unzip it at <>/Ogre/, which should create a <>/Ogre/Dependencies folder,
+and they'll be statically compiled along with the project.
 
-Prebuilt SDK (at this time, only available for Visual Studio) comes with everything but samples
-compiled, and all required external dependencies either included or already compiled together with
-Ogre's libraries and plugins.
-Ogre source may be downloaded from Ogre site or most likely as a zip file from their repository,
-remember we're using v1.9!
+In Linux, it's WAY easier to just install the lib dev packages from the repository (apt-get/aptitude install, etc).
+You may be able to compile them together as well, but we didn't test this (so far).
+
+These Ogre dependencies are:
+* Cg (3.1) [Optional - required for CgProgramManager plugin (shader stuff)]
+* FreeImage (3.15.3)
+* freetype (2.4.9)
+* OIS (1.4) [Optional - for input]
+* zlib (1.2.8)
+* zziplib (0.13.62) 
+* Boost (1.55) - thread and date_time compiled [Optional - required for some ogre multithreading support]
+
+Note that when getting the dependencies pack to compile them, we do not compile 'cg', it is already compiled (for Windows) in the pack.
+You might need to manually set some of the OgreDependencies projects to use the static runtime (project properties -> C++ -> code generation; /MT or /MTd for debug)

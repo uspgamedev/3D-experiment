@@ -54,11 +54,6 @@ endmacro()
 
 add_subdirectory(externals)
 
-message("bullet dirs: ${BULLET_INCLUDE_DIRS}")
-message("bullet libs: ${BULLET_LIBRARIES}")
-message("ogre dirs: ${OGRE_INCLUDE_DIRS}")
-message("ogre libs: ${OGRE_LIBRARIES}")
-
 # PROJECT SOURCES
 set(SRCS
 	./src/BaseApplication.h
